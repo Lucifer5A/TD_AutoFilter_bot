@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from database import collection
+from database import collection, db
 from config import OWNER_ID
 
 @Client.on_message(filters.command("reset") & filters.private)
@@ -9,8 +9,10 @@ async def reset_handler(client, message):
         return
 
     try:
-        # 3: Delete ALL documents from MongoDB files collection
+        # Delete ALL documents from MongoDB files collection
         await collection.delete_many({})
-        await message.reply_text("✅ Database has been reset successfully")
+        # Also clear scan states
+        await db["scan_state"].delete_many({})
+        await message.reply_text("✅ Database and scan states have been reset successfully")
     except Exception as e:
         await message.reply_text(f"❌ Error resetting database: {str(e)}")

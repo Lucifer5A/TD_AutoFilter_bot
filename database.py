@@ -25,35 +25,32 @@ QUAL_MAP = {
     "1080p": ["1080", "108", "1080p"]
 }
 
-async def add_file(file_id, file_name, caption):
+async def add_file(file_id, file_name, caption, message_id=None, channel_id=None, file_type=None):
+    # Prepare update data
+    data = {
+        "file_name": file_name,
+        "caption": caption or file_name
+    }
+    if message_id: data["message_id"] = message_id
+    if channel_id: data["channel_id"] = channel_id
+    if file_type: data["file_type"] = file_type
+
     await collection.update_one(
         {"file_id": file_id},
-        {"$set": {
-            "file_name": file_name,
-            "caption": caption or file_name
-        }},
+        {"$set": data},
         upsert=True
     )
 
 async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=10):
-    # Construct an array of required patterns (Query AND (Lang OR Qual))
-    # Requirement: "Build regex pattern from selected language + quality" and "Combine patterns using OR (|)"
-    # Example: telugu + 720p -> "tel|telu|te|telugu|720|72|720p"
-    # To satisfy both search accuracy and the prompt's OR logic:
-    # We want results that contain the query AND match the fuzzy filter pattern.
-
     filter_patterns = []
     if quality and quality.lower() in QUAL_MAP:
         filter_patterns.extend(QUAL_MAP[quality.lower()])
     if language and language.lower() in LANG_MAP:
         filter_patterns.extend(LANG_MAP[language.lower()])
 
-    # Base query filter
     mongo_filter = {"file_name": {"$regex": re.escape(query), "$options": "i"}}
 
     if filter_patterns:
-        # Construct the OR part for quality/language
-        # Order-independent: ensure the combined pattern exists
         combined_filters = "|".join([re.escape(x) for x in filter_patterns])
         mongo_filter["$and"] = [
             {"file_name": {"$regex": re.escape(query), "$options": "i"}},
