@@ -8,29 +8,14 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
-# Fuzzy Mappings
-LANG_MAP = {
-    "telugu": ["tel", "telu", "te", "telugu"],
-    "tamil": ["tam", "tami", "ta", "tamil"],
-    "hindi": ["hin", "hi", "hind", "hindi"],
-    "english": ["eng", "en", "english"],
-    "malayalam": ["mal", "mala", "malayalam"],
-    "kannada": ["kan", "kann", "kannada"],
-    "japanese": ["jap", "japa", "japanese"]
-}
+# Regex patterns for detection
+SEASON_REGEX = re.compile(r"(S|Season|Session)\s?0?(\d{1,2})", re.IGNORECASE)
+EPISODE_REGEX = re.compile(r"(E|Episode)\s?0?(\d{1,3})", re.IGNORECASE)
 
-QUAL_MAP = {
-    "480p": ["480", "48", "480p"],
-    "720p": ["720", "72", "720p"],
-    "1080p": ["1080", "108", "1080p"]
-}
-
-# Strict Regex patterns for detection as requested
-SEASON_REGEX = re.compile(r"(S(\d{1,2})|Season\s?(\d+))", re.IGNORECASE)
-EPISODE_REGEX = re.compile(r"(E(\d{1,3})|Episode\s?(\d+))", re.IGNORECASE)
-
-# Patterns to remove for clean series name
+# Normalization cleaning patterns
 CLEAN_PATTERNS = [
+    SEASON_REGEX,
+    EPISODE_REGEX,
     re.compile(r"\[.*?\]"),
     re.compile(r"\(.*?\)"),
     re.compile(r"\b(480p|720p|1080p|2160p|4k|hd|web\-dl|bluray|hdtv|x264|x265|hevc|mkv|mp4|avi)\b", re.IGNORECASE),
@@ -39,15 +24,12 @@ CLEAN_PATTERNS = [
 ]
 
 def clean_series_name(file_name):
-    # Remove Season and Episode patterns first
-    name = SEASON_REGEX.sub("", file_name)
-    name = EPISODE_REGEX.sub("", name)
+    # 1) SERIES NORMALIZATION (CRITICAL FIX)
+    name = file_name.lower()
     for pattern in CLEAN_PATTERNS:
         name = pattern.sub("", name)
-    # Remove messy separators
-    name = re.sub(r"[^a-zA-Z0-9\s]", " ", name)
-    # Clean extra spaces and title case
-    return " ".join(name.split()).strip().title()
+    name = re.sub(r"[^a-z0-9\s]", " ", name)
+    return " ".join(name.split()).strip()
 
 async def add_file(file_id, file_name, caption, message_id=None, channel_id=None, file_type=None):
     cleaned_name = clean_series_name(file_name)
@@ -66,80 +48,57 @@ async def add_file(file_id, file_name, caption, message_id=None, channel_id=None
         upsert=True
     )
 
+async def get_unique_series():
+    # Use distinct on cleaned_name
+    series = await collection.distinct("cleaned_name")
+    return sorted([s.title() for s in series if s])
+
+async def get_series_files(series_name):
+    # Fetch all files matching the normalized name
+    cursor = collection.find({"cleaned_name": series_name.lower()})
+    return await cursor.to_list(length=None)
+
 async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=10):
+    # (Previously implemented fuzzy logic)
+    from database import QUAL_MAP, LANG_MAP
+    mongo_filter = {"file_name": {"$regex": re.escape(query), "$options": "i"}}
+
     filter_patterns = []
     if quality and quality.lower() in QUAL_MAP:
         filter_patterns.extend(QUAL_MAP[quality.lower()])
     if language and language.lower() in LANG_MAP:
         filter_patterns.extend(LANG_MAP[language.lower()])
 
-    mongo_filter = {"file_name": {"$regex": re.escape(query), "$options": "i"}}
     if filter_patterns:
-        combined_filters = "|".join([re.escape(x) for x in filter_patterns])
+        combined = "|".join([re.escape(x) for x in filter_patterns])
         mongo_filter["$and"] = [
             {"file_name": {"$regex": re.escape(query), "$options": "i"}},
-            {"file_name": {"$regex": combined_filters, "$options": "i"}}
+            {"file_name": {"$regex": combined, "$options": "i"}}
         ]
-
     total_count = await collection.count_documents(mongo_filter)
     cursor = collection.find(mongo_filter).skip(skip).limit(limit)
     results = await cursor.to_list(length=limit)
     return results, total_count
 
-async def get_unique_series():
-    # Fetch distinct cleaned names
-    series = await collection.distinct("cleaned_name")
-    return sorted([s for s in series if s])
-
-async def get_seasons(series_name):
-    # Find all files for this series
-    cursor = collection.find({"cleaned_name": {"$regex": f"^{re.escape(series_name)}$", "$options": "i"}}, {"file_name": 1})
-    seasons = set()
-    found = False
-    async for doc in cursor:
-        found = True
-        match = SEASON_REGEX.search(doc["file_name"])
-        if match:
-            s_num = match.group(2) or match.group(3)
-            if s_num:
-                seasons.add(int(s_num))
-
-    if not found:
-        return []
-
-    if not seasons:
-        # Default to Season 1 if series exists but no season pattern found
-        return [1]
-
-    return sorted(list(seasons))
-
-async def get_episodes(series_name, season_number):
-    cursor = collection.find({"cleaned_name": {"$regex": f"^{re.escape(series_name)}$", "$options": "i"}}, {"file_name": 1, "file_id": 1})
-    episodes = []
-    async for doc in cursor:
-        # Match season
-        s_match = SEASON_REGEX.search(doc["file_name"])
-        current_s = int(s_match.group(2) or s_match.group(3)) if s_match else 1
-
-        if current_s == season_number:
-            e_match = EPISODE_REGEX.search(doc["file_name"])
-            if e_match:
-                e_num = int(e_match.group(2) or e_match.group(3))
-            else:
-                # Default Episode 01 if no pattern
-                e_num = 1
-
-            episodes.append({
-                "id": str(doc["_id"]),
-                "file_id": doc["file_id"],
-                "name": doc["file_name"],
-                "e_num": e_num
-            })
-
-    return sorted(episodes, key=lambda x: x["e_num"])
-
 async def get_file_by_db_id(db_id):
-    try:
-        return await collection.find_one({"_id": ObjectId(db_id)})
-    except Exception:
-        return None
+    try: return await collection.find_one({"_id": ObjectId(db_id)})
+    except Exception: return None
+
+# Helper Mappings for detection
+LANG_MAP = {
+    "telugu": ["tel", "telu", "te", "telugu"],
+    "tamil": ["tam", "tami", "ta", "tamil"],
+    "hindi": ["hin", "hi", "hind", "hindi"],
+    "english": ["eng", "en", "english"],
+    "malayalam": ["mal", "mala", "malayalam"],
+    "kannada": ["kan", "kann", "kannada"],
+    "japanese": ["jap", "japa", "japanese"]
+}
+
+QUAL_MAP = {
+    "480p": ["480", "48", "480p"],
+    "720p": ["720", "72", "720p"],
+    "1080p": ["1080", "108", "1080p"],
+    "4k": ["4k", "2160p"],
+    "360p": ["360p", "360"]
+}
