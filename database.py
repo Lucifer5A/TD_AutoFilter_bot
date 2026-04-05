@@ -8,6 +8,23 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
+# Fuzzy Mappings
+LANG_MAP = {
+    "telugu": ["tel", "telu", "te", "telugu"],
+    "tamil": ["tam", "tami", "ta", "tamil"],
+    "hindi": ["hin", "hi", "hind", "hindi"],
+    "english": ["eng", "en", "english"],
+    "malayalam": ["mal", "mala", "malayalam"],
+    "kannada": ["kan", "kann", "kannada"],
+    "japanese": ["jap", "japa", "japanese"]
+}
+
+QUAL_MAP = {
+    "480p": ["480", "48", "480p"],
+    "720p": ["720", "72", "720p"],
+    "1080p": ["1080", "108", "1080p"]
+}
+
 async def add_file(file_id, file_name, caption):
     await collection.update_one(
         {"file_id": file_id},
@@ -18,29 +35,33 @@ async def add_file(file_id, file_name, caption):
         upsert=True
     )
 
-async def search_files_advanced(query, quality=None, language=None, skip=0, limit=10):
-    # Escape parts
-    q = re.escape(query)
+async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=10):
+    # Construct an array of required patterns (Query AND (Lang OR Qual))
+    # Requirement: "Build regex pattern from selected language + quality" and "Combine patterns using OR (|)"
+    # Example: telugu + 720p -> "tel|telu|te|telugu|720|72|720p"
+    # To satisfy both search accuracy and the prompt's OR logic:
+    # We want results that contain the query AND match the fuzzy filter pattern.
 
-    # Logic for combined filters
-    if (quality and quality != "None") and (language and language != "None"):
-        qual = re.escape(quality)
-        lang = re.escape(language)
-        # Requirement: query.*(telugu.*720p|720p.*telugu)
-        regex_pattern = f"{q}.*({lang}.*{qual}|{qual}.*{lang})"
-    elif quality and quality != "None":
-        qual = re.escape(quality)
-        regex_pattern = f"{q}.*{qual}"
-    elif language and language != "None":
-        lang = re.escape(language)
-        regex_pattern = f"{q}.*{lang}"
-    else:
-        regex_pattern = q
+    filter_patterns = []
+    if quality and quality.lower() in QUAL_MAP:
+        filter_patterns.extend(QUAL_MAP[quality.lower()])
+    if language and language.lower() in LANG_MAP:
+        filter_patterns.extend(LANG_MAP[language.lower()])
 
-    filter_obj = {"file_name": {"$regex": regex_pattern, "$options": "i"}}
+    # Base query filter
+    mongo_filter = {"file_name": {"$regex": re.escape(query), "$options": "i"}}
 
-    total_count = await collection.count_documents(filter_obj)
-    cursor = collection.find(filter_obj).skip(skip).limit(limit)
+    if filter_patterns:
+        # Construct the OR part for quality/language
+        # Order-independent: ensure the combined pattern exists
+        combined_filters = "|".join([re.escape(x) for x in filter_patterns])
+        mongo_filter["$and"] = [
+            {"file_name": {"$regex": re.escape(query), "$options": "i"}},
+            {"file_name": {"$regex": combined_filters, "$options": "i"}}
+        ]
+
+    total_count = await collection.count_documents(mongo_filter)
+    cursor = collection.find(mongo_filter).skip(skip).limit(limit)
     results = await cursor.to_list(length=limit)
 
     return results, total_count

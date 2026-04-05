@@ -12,11 +12,10 @@ bot = Client(
     plugins=dict(root="TDBotDev")
 )
 
-# Flag to prevent usage during indexing
-IS_INDEXING = True
+# Set initial indexing state
+bot.is_indexing = True
 
 async def index_channel_history(client: Client):
-    global IS_INDEXING
     print(f"Starting channel indexing for chat ID: {SEARCH_CHANNEL_ID}...")
     total_saved = 0
     try:
@@ -46,7 +45,7 @@ async def index_channel_history(client: Client):
     except Exception as e:
         print(f"Error during overall indexing loop: {str(e)}")
     print(f"✅ Channel indexing completed. Total files saved: {total_saved}")
-    IS_INDEXING = False
+    client.is_indexing = False
 
 @bot.on_message(filters.chat(SEARCH_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
 async def channel_index_handler(client, message):
@@ -84,8 +83,12 @@ async def file_callback_handler(client, cb):
 if __name__ == "__main__":
     async def main():
         await bot.start()
+        # Perform history indexing before idle,
+        # handlers are active but will be blocked by IS_INDEXING flag in filescan.py
         await index_channel_history(bot)
         try: await bot.send_message(OWNER_ID, "bot started successfully ✅")
         except: pass
         await idle()
-    asyncio.get_event_loop().run_until_complete(main())
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
