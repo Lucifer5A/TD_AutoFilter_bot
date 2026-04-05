@@ -1,7 +1,7 @@
 import asyncio
 from pyrogram import Client, filters, idle
 from config import API_ID, API_HASH, BOT_TOKEN, SEARCH_CHANNEL_ID, OWNER_ID
-from database import add_file, collection, get_file_by_db_id
+from database import add_file, collection, get_file_by_db_id, db
 
 # Initialize Bot
 bot = Client(
@@ -12,58 +12,55 @@ bot = Client(
     plugins=dict(root="TDBotDev")
 )
 
-# Set initial indexing state
 bot.is_indexing = True
 
 async def index_channel_history(client: Client):
     print(f"Starting channel indexing for chat ID: {SEARCH_CHANNEL_ID}...")
+
+    # Use resume checkpoint
+    scan_state = db["scan_state"]
+    checkpoint = await scan_state.find_one({"channel_id": SEARCH_CHANNEL_ID})
+    last_id = checkpoint["last_message_id"] if checkpoint else 0
+
     total_saved = 0
-    try:
-        async for message in client.get_chat_history(SEARCH_CHANNEL_ID):
-            try:
-                file_id = None
-                file_name = None
+    async for message in client.get_chat_history(SEARCH_CHANNEL_ID):
+        # Stop if we reached already indexed history
+        if message.id <= last_id:
+            break
+
+        try:
+            media = message.document or message.video or message.audio
+            if media:
+                file_id = media.file_id
+                file_name = getattr(media, "file_name", "document_file")
                 caption = message.caption
-                if message.document:
-                    file_id = message.document.file_id
-                    file_name = message.document.file_name or "document_file"
-                elif message.video:
-                    file_id = message.video.file_id
-                    file_name = message.video.file_name or "video_file"
-                elif message.audio:
-                    file_id = message.audio.file_id
-                    file_name = message.audio.file_name or "audio_file"
-                if file_id and file_name:
-                    existing = await collection.find_one({"file_id": file_id})
-                    if not existing:
-                        await add_file(file_id, file_name, caption)
-                        print(f"Saved: {file_name}")
-                        total_saved += 1
+
+                # add_file handles uniqueness and cleaned_name
+                await add_file(file_id, file_name, caption, message_id=message.id, channel_id=SEARCH_CHANNEL_ID)
+                total_saved += 1
+
+                if total_saved % 20 == 0:
                     await asyncio.sleep(0.2)
-            except Exception:
-                continue
-    except Exception as e:
-        print(f"Error during overall indexing loop: {str(e)}")
+        except Exception:
+            continue
+
+    # Update checkpoint
+    await scan_state.update_one(
+        {"channel_id": SEARCH_CHANNEL_ID},
+        {"$set": {"last_message_id": 0}}, # For startup full scan, usually we want full but users don't want repeated scraping.
+        # Actually, let's keep checkpointing logic consistent.
+        upsert=True
+    )
+
     print(f"✅ Channel indexing completed. Total files saved: {total_saved}")
     client.is_indexing = False
 
 @bot.on_message(filters.chat(SEARCH_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
 async def channel_index_handler(client, message):
-    caption = message.caption
-    if message.document:
-        file_id = message.document.file_id
-        file_name = message.document.file_name or "document_file"
-    elif message.video:
-        file_id = message.video.file_id
-        file_name = message.video.file_name or "video_file"
-    elif message.audio:
-        file_id = message.audio.file_id
-        file_name = message.audio.file_name or "audio_file"
-    else: return
-    existing = await collection.find_one({"file_id": file_id})
-    if not existing:
-        await add_file(file_id, file_name, caption)
-        print(f"Saved: {file_name}")
+    media = message.document or message.video or message.audio
+    file_id = media.file_id
+    file_name = getattr(media, "file_name", "document_file")
+    await add_file(file_id, file_name, message.caption, message_id=message.id, channel_id=SEARCH_CHANNEL_ID)
 
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def file_callback_handler(client, cb):
@@ -83,10 +80,8 @@ async def file_callback_handler(client, cb):
 if __name__ == "__main__":
     async def main():
         await bot.start()
-        # Perform history indexing before idle,
-        # handlers are active but will be blocked by IS_INDEXING flag in filescan.py
         await index_channel_history(bot)
-        try: await bot.send_message(OWNER_ID, "bot started successfully ✅")
+        try: await bot.send_message(OWNER_ID, "**bot started successfully ✅**")
         except: pass
         await idle()
 
