@@ -34,9 +34,12 @@ async def channel_index_handler(client: Client, message: Message):
     await add_file(file_id, file_name)
 
 # 5, 6, 7, 8, 11: Auto search handler with instant feedback
-# filters.command() handles checking if it's a command properly
-@bot.on_message(filters.text & ~filters.command() & filters.private)
+@bot.on_message(filters.text & filters.private)
 async def auto_search_handler(client: Client, message: Message):
+    # Simple manually filtering out commands to avoid common Pyrogram filter issues
+    if message.text.startswith("/"):
+        return
+
     # 5: Immediate reply for instant feedback
     status_msg = await message.reply_text("🔍 Searching for your file...")
 
@@ -45,7 +48,7 @@ async def auto_search_handler(client: Client, message: Message):
     try:
         results = await search_files(query, limit=MAX_RESULTS)
     except Exception as e:
-        await status_msg.edit_text("😔 An error occurred while searching. Please try a simpler name.")
+        await status_msg.edit_text(f"😔 An error occurred while searching: {str(e)}")
         return
 
     if not results:
