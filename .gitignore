@@ -5,3 +5,4 @@ bot.db
 *.session
 *.session-journal
 bot_output.log
+.env
