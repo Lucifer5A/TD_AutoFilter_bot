@@ -6,11 +6,12 @@ BOT_TOKEN = "8579277980:AAHwYFeP1rLzDbPSZ9-98lsqSdgXMkQMJ98"
 
 # Search Settings
 SEARCH_CHANNEL_ID = -1001234567890  # Replace with actual private channel ID
-START_TEXT = "Send any file name to search 🔍"
+START_TEXT = "Send any movie name, I will find it for you 🎬"
+MAX_RESULTS = 10
 
 # Database Settings
 MONGO_URI = "mongodb+srv://tdanimehub_db_user:cPdMT253KSZpE11Z@helper.wallqjf.mongodb.net/?retryWrites=true&w=majority&appName=Helper"
-DB_NAME = "file_store_db"
+DATABASE_NAME = "autofilebot"
 COLLECTION_NAME = "files"
 
 # Optional settings

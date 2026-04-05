@@ -2,4 +2,3 @@ pyrogram
 tgcrypto
 motor
 pymongo
-mongomock

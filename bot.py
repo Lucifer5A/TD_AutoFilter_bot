@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
-from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, SEARCH_CHANNEL_ID
+from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, SEARCH_CHANNEL_ID, MAX_RESULTS
 from database import add_file, search_files, get_file_by_db_id
 
 # Initialize Bot
@@ -16,7 +16,7 @@ bot = Client(
 async def start_handler(client: Client, message: Message):
     await message.reply_text(START_TEXT)
 
-# 6: Channel Indexing handler
+# 10: Channel Indexing handler
 @bot.on_message(filters.chat(SEARCH_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
 async def channel_index_handler(client: Client, message: Message):
     if message.document:
@@ -33,29 +33,31 @@ async def channel_index_handler(client: Client, message: Message):
 
     await add_file(file_id, file_name)
 
-# 5 & 7 & 11: Auto search handler
-@bot.on_message(filters.text & filters.private)
+# 5, 6, 7, 8, 11: Auto search handler with instant feedback
+# filters.command() handles checking if it's a command properly
+@bot.on_message(filters.text & ~filters.command() & filters.private)
 async def auto_search_handler(client: Client, message: Message):
-    # Skip commands
-    if message.text.startswith("/"):
-        return
+    # 5: Immediate reply for instant feedback
+    status_msg = await message.reply_text("🔍 Searching for your file...")
 
     query = message.text
-    results = await search_files(query)
-
-    if not results:
-        # 9: No results found
-        await message.reply_text("No files found 😔")
+    # 6: Search in MongoDB
+    try:
+        results = await search_files(query, limit=MAX_RESULTS)
+    except Exception as e:
+        await status_msg.edit_text("😔 An error occurred while searching. Please try a simpler name.")
         return
 
-    # 7: Display results as inline keyboard buttons
+    if not results:
+        # 8: Edit message if no results
+        await status_msg.edit_text("😔 Sorry, I couldn't find anything for that")
+        return
+
+    # 7: Edit message and add inline buttons
     buttons = []
-    # Limit to 50 results to avoid Telegram's button limits
-    for file in results[:50]:
+    for file in results:
         db_id = str(file['_id'])
         file_name = file['file_name']
-
-        # Use database ID instead of file_id to stay within 64-byte limit
         callback_data = f"f#{db_id}"
 
         try:
@@ -64,34 +66,32 @@ async def auto_search_handler(client: Client, message: Message):
             continue
 
     if not buttons:
-        await message.reply_text("No results available 😔")
+        await status_msg.edit_text("No results available 😔")
         return
 
-    await message.reply_text(
-        "Search results:",
+    await status_msg.edit_text(
+        "Here are your results 👇",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# 8 & 9 & 11: Callback handler
+# 9 & 11: Callback handler
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def callback_handler(client: Client, callback_query: CallbackQuery):
     db_id = callback_query.data.split("#")[1]
     file_info = await get_file_by_db_id(db_id)
 
     if not file_info:
-        # 9: File not found during callback
         await callback_query.answer("File not available", show_alert=True)
         return
 
     file_id = file_info['file_id']
-    file_name = file_info['file_name']
 
-    # 8: Send file using send_document
+    # 9: Send file instantly with requested caption
     try:
         await client.send_document(
             chat_id=callback_query.message.chat.id,
             document=file_id,
-            caption=file_name
+            caption="📥 Here is your file"
         )
         await callback_query.answer()
     except Exception as e:

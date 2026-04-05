@@ -1,10 +1,12 @@
+import pymongo
+import re
 from motor.motor_asyncio import AsyncIOMotorClient
-from config import MONGO_URI, DB_NAME, COLLECTION_NAME
+from config import MONGO_URI, DATABASE_NAME, COLLECTION_NAME
 from bson.objectid import ObjectId
 
 # Client and Collection initialization
 client = AsyncIOMotorClient(MONGO_URI)
-db = client[DB_NAME]
+db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
 async def add_file(file_id, file_name):
@@ -15,12 +17,14 @@ async def add_file(file_id, file_name):
         upsert=True
     )
 
-async def search_files(query):
+async def search_files(query, limit=10):
+    # Escape query for regex to prevent injection/crashes
+    escaped_query = re.escape(query)
     # Case-insensitive regex search
     cursor = collection.find(
-        {"file_name": {"$regex": query, "$options": "i"}}
+        {"file_name": {"$regex": escaped_query, "$options": "i"}}
     )
-    return await cursor.to_list(length=100)
+    return await cursor.to_list(length=limit)
 
 async def get_file_by_db_id(db_id):
     try:
