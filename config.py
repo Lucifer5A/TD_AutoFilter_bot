@@ -6,7 +6,7 @@ BOT_TOKEN = "8579277980:AAHwYFeP1rLzDbPSZ9-98lsqSdgXMkQMJ98"
 
 # Search Settings
 SEARCH_CHANNEL_ID = -1002598623129
-START_TEXT = "Send any movie name, I will find it for you 🎬"
+START_TEXT = "Send any movie or file name to search 🔍"
 MAX_RESULTS = 10
 
 # Database Settings

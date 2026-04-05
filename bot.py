@@ -31,35 +31,37 @@ async def channel_index_handler(client: Client, message: Message):
     else:
         return
 
+    # Save file_id and file_name exactly as original
     await add_file(file_id, file_name)
 
-# 5, 6, 7, 8, 11: Auto search handler with instant feedback
+# 5, 6, 7, 13: Auto search handler with specific messaging
 @bot.on_message(filters.text & filters.private)
 async def auto_search_handler(client: Client, message: Message):
-    # Simple manually filtering out commands to avoid common Pyrogram filter issues
+    # Skip commands
     if message.text.startswith("/"):
         return
 
-    # 5: Immediate reply for instant feedback
-    status_msg = await message.reply_text("🔍 Searching for your file...")
+    # 5: Immediate reply: "🔍 Searching... Please wait"
+    status_msg = await message.reply_text("🔍 Searching... Please wait")
 
     query = message.text
     # 6: Search in MongoDB
     try:
         results = await search_files(query, limit=MAX_RESULTS)
     except Exception as e:
-        await status_msg.edit_text(f"😔 An error occurred while searching: {str(e)}")
+        await status_msg.edit_text(f"😔 An error occurred: {str(e)}")
         return
 
     if not results:
-        # 8: Edit message if no results
-        await status_msg.edit_text("😔 Sorry, I couldn't find anything for that")
+        # 7: Edit message if no results
+        await status_msg.edit_text("No files found 😔")
         return
 
-    # 7: Edit message and add inline buttons
+    # 6: Edit message and add inline buttons
     buttons = []
     for file in results:
         db_id = str(file['_id'])
+        # 6: Button text MUST be EXACT file_name
         file_name = file['file_name']
         callback_data = f"f#{db_id}"
 
@@ -77,24 +79,28 @@ async def auto_search_handler(client: Client, message: Message):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# 9 & 11: Callback handler
+# 8, 9, 11, 13: Callback handler
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def callback_handler(client: Client, callback_query: CallbackQuery):
     db_id = callback_query.data.split("#")[1]
     file_info = await get_file_by_db_id(db_id)
 
     if not file_info:
+        # 11: Show alert "File not available"
         await callback_query.answer("File not available", show_alert=True)
         return
 
     file_id = file_info['file_id']
+    file_name = file_info['file_name']
 
-    # 9: Send file instantly with requested caption
+    # 9: Caption: file_name\n\n📥 Here is your file
+    caption = f"{file_name}\n\n📥 Here is your file"
+
     try:
         await client.send_document(
             chat_id=callback_query.message.chat.id,
             document=file_id,
-            caption="📥 Here is your file"
+            caption=caption
         )
         await callback_query.answer()
     except Exception as e:
