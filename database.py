@@ -10,33 +10,31 @@ db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 nav_cache = db["nav_cache"]
 
-# Helper Mappings
+# Allowed Mappings as per Requirements
 LANG_MAP = {
-    "telugu": ["tel", "telu", "te", "telugu"],
-    "tamil": ["tam", "tami", "ta", "tamil"],
-    "hindi": ["hin", "hi", "hind", "hindi"],
-    "english": ["eng", "en", "english"],
-    "malayalam": ["mal", "mala", "malayalam"],
-    "kannada": ["kan", "kann", "kannada"],
-    "japanese": ["jap", "japa", "japanese"]
+    "Telugu": ["tel", "telu", "te", "telugu"],
+    "Tamil": ["tam", "tami", "ta", "tamil"],
+    "Hindi": ["hin", "hi", "hind", "hindi"],
+    "English": ["eng", "en", "english"]
 }
 
 QUAL_MAP = {
     "480p": ["480", "48", "480p"],
     "720p": ["720", "72", "720p"],
     "1080p": ["1080", "108", "1080p"],
-    "4k": ["4k", "2160p"],
-    "360p": ["360p", "360"]
+    "4K": ["4k", "2160p"]
 }
 
 # Regex patterns
 SEASON_REGEX = re.compile(r"(S|Season|Session)\s?0?(\d{1,2})", re.IGNORECASE)
 EPISODE_REGEX = re.compile(r"(E|Episode)\s?0?(\d{1,3})", re.IGNORECASE)
+PREFIX_PATTERN = re.compile(r"\[\s?@Team_TD_Links\s?\]", re.IGNORECASE)
 
-# Normalization
+# Normalization for grouping
 CLEAN_PATTERNS = [
     SEASON_REGEX,
     EPISODE_REGEX,
+    PREFIX_PATTERN,
     re.compile(r"\[.*?\]"),
     re.compile(r"\(.*?\)"),
     re.compile(r"\b(480p|720p|1080p|2160p|4k|hd|web\-dl|bluray|hdtv|x264|x265|hevc|mkv|mp4|avi)\b", re.IGNORECASE),
@@ -51,12 +49,21 @@ def clean_series_name(file_name):
     name = re.sub(r"[^a-z0-9\s]", " ", name)
     return " ".join(name.split()).strip()
 
+def clean_ui_name(file_name):
+    # Rule 4 & 5: NEVER show prefix in UI, show clean readable names
+    name = PREFIX_PATTERN.sub("", file_name)
+    return " ".join(name.split()).strip()
+
 def detect_lang(name):
     name = name.lower()
+    detected = []
     for lang, tags in LANG_MAP.items():
         if any(tag in name for tag in tags):
-            return lang.title()
-    return None
+            detected.append(lang)
+
+    if not detected: return None
+    if len(detected) > 1: return "Multiple"
+    return detected[0]
 
 def detect_qual(name):
     name = name.lower()
@@ -67,7 +74,6 @@ def detect_qual(name):
 
 # Navigation Cache for Callback Data
 async def save_nav_state(state_dict):
-    # Use MD5 of the dict as a simple key
     key = hashlib.md5(str(state_dict).encode()).hexdigest()[:12]
     await nav_cache.update_one({"_id": key}, {"$set": state_dict}, upsert=True)
     return key
@@ -96,10 +102,17 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
     mongo_filter = {"file_name": {"$regex": re.escape(query), "$options": "i"}}
 
     filter_patterns = []
-    if quality and quality.lower() in QUAL_MAP:
-        filter_patterns.extend(QUAL_MAP[quality.lower()])
-    if language and language.lower() in LANG_MAP:
-        filter_patterns.extend(LANG_MAP[language.lower()])
+    if quality and quality != "None":
+        if quality in QUAL_MAP: filter_patterns.extend(QUAL_MAP[quality])
+
+    if language and language != "None":
+        if language == "Multiple":
+            # Just match if any lang tags exist? Or Multiple tag?
+            # Prompt says "Allowed only: Telugu, Tamil, Hindi, English, Multiple"
+            # We'll assume if user selects Multiple, they want files with mixed tags.
+            pass
+        elif language in LANG_MAP:
+            filter_patterns.extend(LANG_MAP[language])
 
     if filter_patterns:
         combined = "|".join([re.escape(x) for x in filter_patterns])

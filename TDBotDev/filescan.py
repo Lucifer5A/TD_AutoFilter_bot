@@ -2,7 +2,7 @@ import re
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from config import MAX_RESULTS
-from database import search_files_fuzzy, save_nav_state, get_nav_state
+from database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
 
 # Helper for stateful search callbacks
 async def pack_search(q, qu, l, pg):
@@ -24,7 +24,9 @@ async def get_ui(q, qu, l, pg, total, results):
     ])
     for f in results:
         db_id = str(f['_id'])
-        buttons.append([InlineKeyboardButton(f['file_name'], callback_data=f"f#{db_id}")])
+        # Rule 4 & 5: Clean UI name
+        ui_name = clean_ui_name(f['file_name'])
+        buttons.append([InlineKeyboardButton(ui_name, callback_data=f"f#{db_id}")])
     nav = []
     if pg > 0:
         nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=await pack_search(q, qu, l, pg - 1)))
@@ -58,10 +60,10 @@ async def search_filter_menu_handler(client, cb: CallbackQuery):
     m_type, q, qu, l, pg = state["t"], state["q"], state["qu"], state["l"], state["pg"]
     buttons = []
     if m_type == "q":
-        for opt in ["480p", "720p", "1080p"]:
+        for opt in ["480p", "720p", "1080p", "4K"]:
             buttons.append([InlineKeyboardButton(opt, callback_data=await pack_search(q, opt, l, 0))])
     else:
-        langs = ["Telugu", "Tamil", "Hindi", "English", "Malayalam", "Kannada", "Japanese"]
+        langs = ["Telugu", "Tamil", "Hindi", "English", "Multiple"]
         for opt in langs:
             buttons.append([InlineKeyboardButton(opt, callback_data=await pack_search(q, qu, opt, 0))])
     back_cb = await pack_search(q, qu, l, pg)
@@ -78,7 +80,7 @@ async def search_pagination_handler(client, cb: CallbackQuery):
     q, qu, l, pg = state["q"], state["qu"], state["l"], state["pg"]
     results, total = await search_files_fuzzy(q, quality=qu, language=l, skip=pg*MAX_RESULTS, limit=MAX_RESULTS)
     if not results:
-        await cb.message.edit_text(f"**❌ No {l if l != 'None' else qu} files found**")
+        await cb.message.edit_text(f"**❌ No matching files found**")
         return
     query_disp = f"{q} {qu if qu != 'None' else ''} {l if l != 'None' else ''}".strip()
     text = f"**🔍 Found {total} results for: \"{query_disp}\"**\n\n**Page {pg+1}**\n\n**Click on a file to get it:**"
