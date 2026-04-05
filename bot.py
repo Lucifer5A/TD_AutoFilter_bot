@@ -1,24 +1,28 @@
 import asyncio
 from pyrogram import Client, filters, idle
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
-from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, SEARCH_CHANNEL_ID, MAX_RESULTS
+from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, SEARCH_CHANNEL_ID, MAX_RESULTS, OWNER_ID
 from database import add_file, search_files, get_file_by_db_id, collection
+
+# 7: Integration - importing TDBotDev submodules
+import TDBotDev.start
+import TDBotDev.admin
 
 # Initialize Bot
 bot = Client(
     "file_store_bot",
     api_id=API_ID,
     api_hash=API_HASH,
-    bot_token=BOT_TOKEN
+    bot_token=BOT_TOKEN,
+    plugins=dict(root="TDBotDev") # Load handlers from TDBotDev
 )
 
-# 2 & 9 & 10 & 11: Channel History Indexing with specific logging and flood delay
+# Channel History Indexing
 async def index_channel_history(client: Client):
     print(f"Starting channel indexing for chat ID: {SEARCH_CHANNEL_ID}...")
     total_saved = 0
 
     try:
-        # Resilient scanning
         async for message in client.get_chat_history(SEARCH_CHANNEL_ID):
             try:
                 file_id = None
@@ -36,33 +40,21 @@ async def index_channel_history(client: Client):
                     file_name = message.audio.file_name or "audio_file"
 
                 if file_id and file_name:
-                    # Check if file already exists in DB before adding
                     existing = await collection.find_one({"file_id": file_id})
                     if not existing:
-                        # Store original caption (fallback to file_name)
                         await add_file(file_id, file_name, caption)
-                        # Logging format "Saved: <file_name>"
                         print(f"Saved: {file_name}")
                         total_saved += 1
 
-                    # Performance delay (0.2s) to avoid flood
                     await asyncio.sleep(0.2)
             except Exception:
-                # Handle individual message errors and continue
                 continue
     except Exception as e:
-        # Handle overall errors (e.g., Peer id invalid)
         print(f"Error during overall indexing loop: {str(e)}")
 
-    # Completion message
     print(f"✅ Channel indexing completed. Total files saved: {total_saved}")
 
-# 1 & 4: Start handler
-@bot.on_message(filters.command("start") & filters.private)
-async def start_handler(client: Client, message: Message):
-    await message.reply_text(START_TEXT)
-
-# 8 & 13: Channel Indexing handler for NEW files
+# Indexing handler for NEW files
 @bot.on_message(filters.chat(SEARCH_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
 async def channel_index_handler(client: Client, message: Message):
     caption = message.caption
@@ -78,18 +70,14 @@ async def channel_index_handler(client: Client, message: Message):
     else:
         return
 
-    # Check if file exists to avoid duplicate logs/actions
     existing = await collection.find_one({"file_id": file_id})
     if not existing:
         await add_file(file_id, file_name, caption)
         print(f"Saved: {file_name}")
 
-# 5, 6, 7: Auto search handler with specific messaging
-@bot.on_message(filters.text & filters.private)
+# Auto search handler
+@bot.on_message(filters.text & filters.private & ~filters.command(["start", "reset"]))
 async def auto_search_handler(client: Client, message: Message):
-    if message.text.startswith("/"):
-        return
-
     status_msg = await message.reply_text("🔍 Searching... Please wait")
 
     query = message.text
@@ -123,7 +111,7 @@ async def auto_search_handler(client: Client, message: Message):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# 9, 10, 11, 13: Callback handler
+# Callback handler
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def callback_handler(client: Client, callback_query: CallbackQuery):
     db_id = callback_query.data.split("#")[1]
@@ -149,9 +137,15 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
 if __name__ == "__main__":
     async def main():
         await bot.start()
-        # Ensure indexing is complete before idling
         print("Bot started. Beginning channel history indexing...")
         await index_channel_history(bot)
+
+        # Bot started successfully notification to owner
+        try:
+            await bot.send_message(OWNER_ID, "bot started successfully ✅")
+        except Exception as e:
+            print(f"Failed to send startup message to owner: {e}")
+
         print("Initial channel indexing complete. Bot is now active for users.")
         await idle()
 
