@@ -25,7 +25,7 @@ QUAL_MAP = {
     "1080p": ["1080", "108", "1080p"]
 }
 
-# Regex patterns for cleaning and detection
+# Strict Regex patterns for detection as requested
 SEASON_REGEX = re.compile(r"(S(\d{1,2})|Season\s?(\d+))", re.IGNORECASE)
 EPISODE_REGEX = re.compile(r"(E(\d{1,3})|Episode\s?(\d+))", re.IGNORECASE)
 
@@ -39,15 +39,17 @@ CLEAN_PATTERNS = [
 ]
 
 def clean_series_name(file_name):
+    # Remove Season and Episode patterns first
     name = SEASON_REGEX.sub("", file_name)
     name = EPISODE_REGEX.sub("", name)
     for pattern in CLEAN_PATTERNS:
         name = pattern.sub("", name)
+    # Remove messy separators
     name = re.sub(r"[^a-zA-Z0-9\s]", " ", name)
+    # Clean extra spaces and title case
     return " ".join(name.split()).strip().title()
 
 async def add_file(file_id, file_name, caption, message_id=None, channel_id=None, file_type=None):
-    # Store cleaned_name to make /list_channel efficient
     cleaned_name = clean_series_name(file_name)
     data = {
         "file_name": file_name,
@@ -85,39 +87,59 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
     return results, total_count
 
 async def get_unique_series():
-    # Efficient: use distinct on cleaned_name
+    # Fetch distinct cleaned names
     series = await collection.distinct("cleaned_name")
     return sorted([s for s in series if s])
 
 async def get_seasons(series_name):
-    # Efficient: search by cleaned_name
-    cursor = collection.find({"cleaned_name": series_name}, {"file_name": 1})
+    # Find all files for this series
+    cursor = collection.find({"cleaned_name": {"$regex": f"^{re.escape(series_name)}$", "$options": "i"}}, {"file_name": 1})
     seasons = set()
+    found = False
     async for doc in cursor:
+        found = True
         match = SEASON_REGEX.search(doc["file_name"])
         if match:
             s_num = match.group(2) or match.group(3)
-            if s_num: seasons.add(int(s_num))
-    if not seasons: return [1]
+            if s_num:
+                seasons.add(int(s_num))
+
+    if not found:
+        return []
+
+    if not seasons:
+        # Default to Season 1 if series exists but no season pattern found
+        return [1]
+
     return sorted(list(seasons))
 
 async def get_episodes(series_name, season_number):
-    cursor = collection.find({"cleaned_name": series_name}, {"file_name": 1, "file_id": 1})
+    cursor = collection.find({"cleaned_name": {"$regex": f"^{re.escape(series_name)}$", "$options": "i"}}, {"file_name": 1, "file_id": 1})
     episodes = []
     async for doc in cursor:
+        # Match season
         s_match = SEASON_REGEX.search(doc["file_name"])
         current_s = int(s_match.group(2) or s_match.group(3)) if s_match else 1
+
         if current_s == season_number:
             e_match = EPISODE_REGEX.search(doc["file_name"])
-            e_num = int(e_match.group(2) or e_match.group(3)) if e_match else 1
+            if e_match:
+                e_num = int(e_match.group(2) or e_match.group(3))
+            else:
+                # Default Episode 01 if no pattern
+                e_num = 1
+
             episodes.append({
                 "id": str(doc["_id"]),
                 "file_id": doc["file_id"],
                 "name": doc["file_name"],
                 "e_num": e_num
             })
+
     return sorted(episodes, key=lambda x: x["e_num"])
 
 async def get_file_by_db_id(db_id):
-    try: return await collection.find_one({"_id": ObjectId(db_id)})
-    except Exception: return None
+    try:
+        return await collection.find_one({"_id": ObjectId(db_id)})
+    except Exception:
+        return None
