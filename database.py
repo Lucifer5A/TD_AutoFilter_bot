@@ -9,7 +9,6 @@ db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
 async def add_file(file_id, file_name, caption):
-    # Ensure uniqueness using file_id
     await collection.update_one(
         {"file_id": file_id},
         {"$set": {
@@ -19,25 +18,28 @@ async def add_file(file_id, file_name, caption):
         upsert=True
     )
 
-async def search_files(query, filter_text=None, skip=0, limit=10):
-    # Escape query and filter_text for regex
-    escaped_query = re.escape(query)
+async def search_files_advanced(query, quality=None, language=None, skip=0, limit=10):
+    # Escape parts
+    q = re.escape(query)
 
-    # Construct combined regex search if filter exists
-    if filter_text:
-        escaped_filter = re.escape(filter_text)
-        # Search for query.*filter to find both in the file_name
-        regex_pattern = f"{escaped_query}.*{escaped_filter}"
+    # Logic for combined filters
+    if (quality and quality != "None") and (language and language != "None"):
+        qual = re.escape(quality)
+        lang = re.escape(language)
+        # Requirement: query.*(telugu.*720p|720p.*telugu)
+        regex_pattern = f"{q}.*({lang}.*{qual}|{qual}.*{lang})"
+    elif quality and quality != "None":
+        qual = re.escape(quality)
+        regex_pattern = f"{q}.*{qual}"
+    elif language and language != "None":
+        lang = re.escape(language)
+        regex_pattern = f"{q}.*{lang}"
     else:
-        regex_pattern = escaped_query
+        regex_pattern = q
 
-    # Case-insensitive regex search
     filter_obj = {"file_name": {"$regex": regex_pattern, "$options": "i"}}
 
-    # Total count for pagination
     total_count = await collection.count_documents(filter_obj)
-
-    # Fetch results with pagination
     cursor = collection.find(filter_obj).skip(skip).limit(limit)
     results = await cursor.to_list(length=limit)
 

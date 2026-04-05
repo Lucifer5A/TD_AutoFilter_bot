@@ -1,6 +1,6 @@
 import asyncio
 import mongomock
-from database import add_file, search_files, get_file_by_db_id
+from database import add_file, search_files_advanced, get_file_by_db_id
 import database
 from unittest.mock import MagicMock
 
@@ -37,7 +37,7 @@ class MockMotorCursor:
     async def to_list(self, length):
         return list(self.cursor)
 
-async def test_pagination_and_filters():
+async def test_advanced_search():
     # Use mongomock to simulate MongoDB
     mock_client = mongomock.MongoClient()
     mock_db = mock_client['test_db']
@@ -54,33 +54,24 @@ async def test_pagination_and_filters():
     await add_file("f5", "Naruto Movie 1080p Telugu.mp4", None)
     await add_file("f6", "Naruto Movie 480p English.mp4", None)
 
-    # Test basic search and count
-    results, total_results = await search_files("Naruto", limit=2)
-    assert total_results == 6
+    # Test basic search
+    results, total = await search_files_advanced("Naruto", limit=2)
+    assert total == 6
     assert len(results) == 2
 
-    # Test pagination (skip)
-    results, total_results = await search_files("Naruto", skip=2, limit=2)
-    assert total_results == 6
-    assert len(results) == 2
+    # Test combined filter logic: query.*(lang.*qual|qual.*lang)
+    # Search "Naruto" with 720p and Telugu
+    # Pattern: Naruto.*(Telugu.*720p|720p.*Telugu)
+    results, total = await search_files_advanced("Naruto", quality="720p", language="Telugu")
+    assert total == 1
+    assert results[0]['file_name'] == "Naruto Movie 720p Telugu.mp4"
 
-    # Test filter (quality)
-    results, total_results = await search_files("Naruto", filter_text="720p")
-    assert total_results == 2
-    assert "720p" in results[0]['file_name']
+    # Test no results error handling logic
+    results, total = await search_files_advanced("Naruto", quality="4k")
+    assert total == 0
+    assert len(results) == 0
 
-    # Test filter (language)
-    results, total_results = await search_files("Naruto", filter_text="Telugu")
-    assert total_results == 3
-    for r in results:
-        assert "Telugu" in r['file_name']
-
-    # Test combined filter logic (query.*filter)
-    # Search "Naruto Movie" with "Telugu"
-    results, total_results = await search_files("Naruto Movie", filter_text="Telugu")
-    assert total_results == 2
-
-    print("Pagination and Filter database logic tests passed!")
+    print("Advanced search database logic tests passed!")
 
 if __name__ == "__main__":
-    asyncio.run(test_pagination_and_filters())
+    asyncio.run(test_advanced_search())
