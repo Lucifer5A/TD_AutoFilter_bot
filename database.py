@@ -1,5 +1,4 @@
 import sqlite3
-import os
 from config import DATABASE_NAME
 
 def init_db():

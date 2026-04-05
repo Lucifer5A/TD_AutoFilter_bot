@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
-from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT
+from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, OWNER_ID, ADMINS
 from database import init_db, add_file, search_files, get_file_by_id
 
 # Initialize Database
@@ -21,11 +21,11 @@ async def start_handler(client: Client, message: Message):
 
 # 5: Message listener for indexing files from private channel
 # The bot must be admin in the channel
-@bot.on_message(filters.chat_type.CHANNEL & (filters.document | filters.video | filters.audio))
+@bot.on_message(filters.channel & (filters.document | filters.video | filters.audio))
 async def channel_handler(client: Client, message: Message):
     if message.document:
         file_id = message.document.file_id
-        file_name = message.document.file_name
+        file_name = message.document.file_name or "document_file"
     elif message.video:
         file_id = message.video.file_id
         file_name = message.video.file_name or "video_file"
@@ -38,8 +38,11 @@ async def channel_handler(client: Client, message: Message):
     add_file(file_id, file_name)
 
 # 5 & 11: Auto search handler
-@bot.on_message(filters.text & ~filters.command & filters.private)
+@bot.on_message(filters.text & filters.private)
 async def search_handler(client: Client, message: Message):
+    if message.text.startswith("/"):
+        return
+
     query = message.text
     results = search_files(query)
 
@@ -49,8 +52,9 @@ async def search_handler(client: Client, message: Message):
         return
 
     # 6: Display results as inline keyboard buttons
+    # Limit to 50 results to avoid Telegram's button limits
     buttons = []
-    for db_id, file_name in results:
+    for db_id, file_name in results[:50]:
         buttons.append([InlineKeyboardButton(file_name, callback_data=f"file_{db_id}")])
 
     await message.reply_text(
