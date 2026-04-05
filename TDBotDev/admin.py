@@ -1,18 +1,20 @@
 from pyrogram import Client, filters
 from database import collection, db
 from config import OWNER_ID
+from utils import safe_reply
 
 @Client.on_message(filters.command("reset") & filters.private)
 async def reset_handler(client, message):
     if message.from_user.id != OWNER_ID:
-        await message.reply_text("❌ You are not authorized to use this command")
+        await safe_reply(message, "❌ You are not authorized to use this command")
         return
 
     try:
         # Delete ALL documents from MongoDB files collection
         await collection.delete_many({})
-        # Also clear scan states
+        # Also clear scan states and nav cache
         await db["scan_state"].delete_many({})
-        await message.reply_text("✅ Database and scan states have been reset successfully")
+        await db["nav_cache"].delete_many({})
+        await safe_reply(message, "✅ Database and cache have been reset successfully")
     except Exception as e:
-        await message.reply_text(f"❌ Error resetting database: {str(e)}")
+        await safe_reply(message, f"❌ Error resetting database: {str(e)}")

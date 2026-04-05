@@ -8,7 +8,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "8579277980:AAHwYFeP1rLzDbPSZ9-98lsqSdgX
 
 # Search Settings
 db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1002598623129))
-START_TEXT = os.environ.get("START_TEXT", "Send any movie or file name to search 🔍")
+START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to CineVerse Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
 MAX_RESULTS = int(os.environ.get("MAX_RESULTS", 10))
 
 # Database Settings
