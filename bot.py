@@ -18,7 +18,7 @@ async def index_channel_history(client: Client):
     total_saved = 0
 
     try:
-        # 12: Resilient scanning
+        # Resilient scanning
         async for message in client.get_chat_history(SEARCH_CHANNEL_ID):
             try:
                 file_id = None
@@ -36,25 +36,25 @@ async def index_channel_history(client: Client):
                     file_name = message.audio.file_name or "audio_file"
 
                 if file_id and file_name:
-                    # 7: Check if file already exists in DB before adding
+                    # Check if file already exists in DB before adding
                     existing = await collection.find_one({"file_id": file_id})
                     if not existing:
                         # Store original caption (fallback to file_name)
                         await add_file(file_id, file_name, caption)
-                        # 9: Logging format "Saved: <file_name>"
+                        # Logging format "Saved: <file_name>"
                         print(f"Saved: {file_name}")
                         total_saved += 1
 
-                    # 8: Performance delay (0.2s) to avoid flood
+                    # Performance delay (0.2s) to avoid flood
                     await asyncio.sleep(0.2)
-            except Exception as e:
-                # Handle individual message errors
+            except Exception:
+                # Handle individual message errors and continue
                 continue
     except Exception as e:
         # Handle overall errors (e.g., Peer id invalid)
         print(f"Error during overall indexing loop: {str(e)}")
 
-    # 10: Completion message
+    # Completion message
     print(f"✅ Channel indexing completed. Total files saved: {total_saved}")
 
 # 1 & 4: Start handler
@@ -149,9 +149,10 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
 if __name__ == "__main__":
     async def main():
         await bot.start()
-        # Trigger history indexing on startup in background
-        asyncio.create_task(index_channel_history(bot))
-        print("Bot started and channel history indexing initiated.")
+        # Ensure indexing is complete before idling
+        print("Bot started. Beginning channel history indexing...")
+        await index_channel_history(bot)
+        print("Initial channel indexing complete. Bot is now active for users.")
         await idle()
 
     loop = asyncio.get_event_loop()
