@@ -5,7 +5,7 @@ API_HASH = "fa3796dbdec1efdf151aca5f14815d06"
 BOT_TOKEN = "8579277980:AAHwYFeP1rLzDbPSZ9-98lsqSdgXMkQMJ98"
 
 # Search Settings
-SEARCH_CHANNEL_ID = -1002598623129
+db_CHANNEL_ID = -1002598623129
 START_TEXT = "Send any movie or file name to search 🔍"
 MAX_RESULTS = 10
 

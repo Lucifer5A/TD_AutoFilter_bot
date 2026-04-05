@@ -12,10 +12,10 @@ def pack_list_cb(prefix, series, extra=None):
         data = f"{prefix}#{series[:limit]}#{extra}" if extra else f"{prefix}#{series[:limit]}"
     return data
 
-@Client.on_message(filters.command("list_channel") & filters.private)
+@Client.on_message(filters.command("list_index") & filters.private)
 async def list_channel_handler(client, message):
     if len(message.command) > 1:
-        # MODE 2: /list_channel <series_name>
+        # MODE 2: /list_index <series_name>
         series_name = " ".join(message.command[1:])
         seasons = await get_seasons(series_name)
 
@@ -32,7 +32,7 @@ async def list_channel_handler(client, message):
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     else:
-        # MODE 1: /list_channel
+        # MODE 1: /list_index
         status = await message.reply_text("**Fetching all series... Please wait**")
         series_list = await get_unique_series()
 

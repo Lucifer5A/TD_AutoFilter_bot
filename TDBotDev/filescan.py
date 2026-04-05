@@ -14,7 +14,7 @@ def pack_cb(p, q, qu, l, pg):
 
 def get_ui(q, qu, l, pg, total, results):
     buttons = []
-    # TOP BUTTONS: Bold text formatting is applied in messages, not button labels
+    # TOP BUTTONS
     buttons.append([
         InlineKeyboardButton("Quality ⚡", callback_data=f"menu#q#{q}#{qu}#{l}#{pg}"),
         InlineKeyboardButton("Language 🎵", callback_data=f"menu#l#{q}#{qu}#{l}#{pg}")
@@ -31,7 +31,7 @@ def get_ui(q, qu, l, pg, total, results):
     return InlineKeyboardMarkup(buttons)
 
 # Exclude all bot commands from search handler to prevent interception
-@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset", "scan_channel", "list_channel"]))
+@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset", "scan_channel", "list_index"]))
 async def initial_search_handler(client: Client, message: Message):
     if getattr(client, "is_indexing", False):
         await message.reply_text("**⏳ Please wait, indexing is in progress...**")
@@ -54,11 +54,13 @@ async def filter_menu_handler(client, cb: CallbackQuery):
     buttons = []
     if m_type == "q":
         for opt in ["480p", "720p", "1080p"]:
+            # Corrected arguments for pack_cb (p, q, qu, l, pg)
             buttons.append([InlineKeyboardButton(opt, callback_data=pack_cb("p", q, opt, l, 0))])
     else:
         langs = ["Telugu", "Tamil", "Hindi", "English", "Malayalam", "Kannada", "Japanese"]
         for opt in langs:
-            buttons.append([InlineKeyboardButton(opt, callback_data=pack_cb(q, qu, opt, 0))])
+            # Corrected arguments for pack_cb (p, q, qu, l, pg)
+            buttons.append([InlineKeyboardButton(opt, callback_data=pack_cb("p", q, qu, opt, 0))])
     buttons.append([InlineKeyboardButton("🔙 Back", callback_data=pack_cb("p", q, qu, l, pg))])
     await cb.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(buttons))
 
