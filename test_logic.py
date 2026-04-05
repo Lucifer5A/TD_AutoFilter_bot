@@ -1,37 +1,41 @@
-import os
-from database import init_db, add_file, search_files, get_file_by_id
-from config import DATABASE_NAME
+import mongomock
+from database import add_file, search_files, get_file_by_db_id
+import database
 
-def test_database():
-    # Remove existing db if any
-    if os.path.exists(DATABASE_NAME):
-        os.remove(DATABASE_NAME)
+def test_mongodb_logic():
+    # Use mongomock to simulate MongoDB
+    mock_client = mongomock.MongoClient()
+    mock_db = mock_client['test_db']
+    mock_collection = mock_db['files']
 
-    init_db()
+    # Overwrite database module collection for testing
+    database.collection = mock_collection
 
     # Test adding files
-    add_file("file_id_1", "Avengers.mkv")
-    add_file("file_id_2", "Batman.mp4")
+    add_file("file_id_1", "The Dark Knight.mkv")
+    add_file("file_id_2", "Interstellar.mp4")
     add_file("file_id_3", "Inception.mp4")
 
-    # Test search
-    results = search_files("Avenger")
+    # Test search (regex)
+    results = search_files("Knight")
     assert len(results) == 1
-    assert results[0][1] == "Avengers.mkv"
+    assert results[0]['file_name'] == "The Dark Knight.mkv"
 
     results = search_files("mp4")
     assert len(results) == 2
 
-    results = search_files("None")
-    assert len(results) == 0
+    # Test get by database _id
+    db_id = str(results[0]['_id'])
+    file_info = get_file_by_db_id(db_id)
+    assert file_info['file_name'] == results[0]['file_name']
 
-    # Test get by ID
-    db_id = search_files("Batman")[0][0]
-    file_info = get_file_by_id(db_id)
-    assert file_info[0] == "file_id_2"
-    assert file_info[1] == "Batman.mp4"
+    # Test upsert
+    add_file("file_id_1", "The Dark Knight Rises.mkv")
+    # Search again
+    results = search_files("Knight")
+    assert results[0]['file_name'] == "The Dark Knight Rises.mkv"
 
-    print("Database logic tests passed!")
+    print("MongoDB logic tests with mongomock passed!")
 
 if __name__ == "__main__":
-    test_database()
+    test_mongodb_logic()

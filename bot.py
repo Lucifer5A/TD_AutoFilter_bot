@@ -1,10 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
-from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, OWNER_ID, ADMINS
-from database import init_db, add_file, search_files, get_file_by_id
-
-# Initialize Database
-init_db()
+from config import API_ID, API_HASH, BOT_TOKEN, START_TEXT, SEARCH_CHANNEL_ID
+from database import add_file, search_files, get_file_by_db_id
 
 # Initialize Bot
 bot = Client(
@@ -14,15 +11,14 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
-# 1 & 3: Start handler
+# 1 & 4: Start handler
 @bot.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     await message.reply_text(START_TEXT)
 
-# 5: Message listener for indexing files from private channel
-# The bot must be admin in the channel
-@bot.on_message(filters.channel & (filters.document | filters.video | filters.audio))
-async def channel_handler(client: Client, message: Message):
+# 6: Channel Indexing handler
+@bot.on_message(filters.chat(SEARCH_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
+async def channel_index_handler(client: Client, message: Message):
     if message.document:
         file_id = message.document.file_id
         file_name = message.document.file_name or "document_file"
@@ -37,9 +33,10 @@ async def channel_handler(client: Client, message: Message):
 
     add_file(file_id, file_name)
 
-# 5 & 11: Auto search handler
+# 5 & 7 & 11: Auto search handler
 @bot.on_message(filters.text & filters.private)
-async def search_handler(client: Client, message: Message):
+async def auto_search_handler(client: Client, message: Message):
+    # Skip commands
     if message.text.startswith("/"):
         return
 
@@ -47,35 +44,49 @@ async def search_handler(client: Client, message: Message):
     results = search_files(query)
 
     if not results:
-        # 8: No results found
+        # 9: No results found
         await message.reply_text("No files found 😔")
         return
 
-    # 6: Display results as inline keyboard buttons
-    # Limit to 50 results to avoid Telegram's button limits
+    # 7: Display results as inline keyboard buttons
     buttons = []
-    for db_id, file_name in results[:50]:
-        buttons.append([InlineKeyboardButton(file_name, callback_data=f"file_{db_id}")])
+    # Limit to 50 results to avoid Telegram's button limits
+    for file in results[:50]:
+        db_id = str(file['_id'])
+        file_name = file['file_name']
+
+        # Use database ID instead of file_id to stay within 64-byte limit
+        callback_data = f"f#{db_id}"
+
+        try:
+            buttons.append([InlineKeyboardButton(file_name, callback_data=callback_data)])
+        except Exception:
+            continue
+
+    if not buttons:
+        await message.reply_text("No results available 😔")
+        return
 
     await message.reply_text(
-        "Found results:",
+        "Search results:",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# 7 & 9 & 11: Callback query handler
-@bot.on_callback_query(filters.regex(r"^file_"))
+# 8 & 9 & 11: Callback handler
+@bot.on_callback_query(filters.regex(r"^f#"))
 async def callback_handler(client: Client, callback_query: CallbackQuery):
-    db_id = callback_query.data.split("_")[1]
-    result = get_file_by_id(db_id)
+    db_id = callback_query.data.split("#")[1]
+    file_info = get_file_by_db_id(db_id)
 
-    if not result:
+    if not file_info:
         # 9: File not found during callback
         await callback_query.answer("File not available", show_alert=True)
         return
 
-    file_id, file_name = result
+    file_id = file_info['file_id']
+    file_name = file_info['file_name']
 
-    # 7: Send the file using send_document
+    # 8: Send file using send_document
     try:
         await client.send_document(
             chat_id=callback_query.message.chat.id,
