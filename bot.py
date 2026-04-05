@@ -17,38 +17,42 @@ async def index_channel_history(client: Client):
     print(f"Starting channel indexing for chat ID: {SEARCH_CHANNEL_ID}...")
     total_saved = 0
 
-    # Use get_chat_history to scan full history
-    async for message in client.get_chat_history(SEARCH_CHANNEL_ID):
-        try:
-            file_id = None
-            file_name = None
-            caption = message.caption
+    try:
+        # 12: Resilient scanning
+        async for message in client.get_chat_history(SEARCH_CHANNEL_ID):
+            try:
+                file_id = None
+                file_name = None
+                caption = message.caption
 
-            if message.document:
-                file_id = message.document.file_id
-                file_name = message.document.file_name or "document_file"
-            elif message.video:
-                file_id = message.video.file_id
-                file_name = message.video.file_name or "video_file"
-            elif message.audio:
-                file_id = message.audio.file_id
-                file_name = message.audio.file_name or "audio_file"
+                if message.document:
+                    file_id = message.document.file_id
+                    file_name = message.document.file_name or "document_file"
+                elif message.video:
+                    file_id = message.video.file_id
+                    file_name = message.video.file_name or "video_file"
+                elif message.audio:
+                    file_id = message.audio.file_id
+                    file_name = message.audio.file_name or "audio_file"
 
-            if file_id and file_name:
-                # 7: Check if file already exists in DB before adding
-                existing = await collection.find_one({"file_id": file_id})
-                if not existing:
-                    # Store original caption (fallback to file_name)
-                    await add_file(file_id, file_name, caption)
-                    # 9: Logging format "Saved: <file_name>"
-                    print(f"Saved: {file_name}")
-                    total_saved += 1
+                if file_id and file_name:
+                    # 7: Check if file already exists in DB before adding
+                    existing = await collection.find_one({"file_id": file_id})
+                    if not existing:
+                        # Store original caption (fallback to file_name)
+                        await add_file(file_id, file_name, caption)
+                        # 9: Logging format "Saved: <file_name>"
+                        print(f"Saved: {file_name}")
+                        total_saved += 1
 
-                # 8: Performance delay (0.2s) to avoid flood
-                await asyncio.sleep(0.2)
-        except Exception as e:
-            # 12: Handle errors silently and continue scanning
-            continue
+                    # 8: Performance delay (0.2s) to avoid flood
+                    await asyncio.sleep(0.2)
+            except Exception as e:
+                # Handle individual message errors
+                continue
+    except Exception as e:
+        # Handle overall errors (e.g., Peer id invalid)
+        print(f"Error during overall indexing loop: {str(e)}")
 
     # 10: Completion message
     print(f"✅ Channel indexing completed. Total files saved: {total_saved}")
