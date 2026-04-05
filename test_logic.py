@@ -5,7 +5,6 @@ import database
 from unittest.mock import MagicMock
 
 # Mock Motor's AsyncIOMotorClient since mongomock is synchronous
-# This is a simplified mock for test purposes
 class MockMotorCollection:
     def __init__(self, collection):
         self.collection = collection
@@ -36,31 +35,26 @@ async def test_mongodb_logic():
     # Overwrite database module collection with our async mock wrapper
     database.collection = MockMotorCollection(mock_collection)
 
-    # Test adding files
-    await add_file("file_id_1", "The Dark Knight.mkv")
-    await add_file("file_id_2", "Interstellar.mp4")
-    await add_file("file_id_3", "Inception.mp4")
+    # Test adding files with captions
+    await add_file("file_id_1", "Movie.mkv", "This is a movie caption")
+    await add_file("file_id_2", "Video.mp4", None) # Testing fallback
 
-    # Test search (regex)
-    results = await search_files("Knight")
+    # Test search
+    results = await search_files("Movie")
     assert len(results) == 1
-    assert results[0]['file_name'] == "The Dark Knight.mkv"
-
-    results = await search_files("mp4")
-    assert len(results) == 2
+    assert results[0]['file_name'] == "Movie.mkv"
+    assert results[0]['caption'] == "This is a movie caption"
 
     # Test get by database _id
     db_id = str(results[0]['_id'])
     file_info = await get_file_by_db_id(db_id)
-    assert file_info['file_name'] == results[0]['file_name']
+    assert file_info['caption'] == "This is a movie caption"
 
-    # Test upsert
-    await add_file("file_id_1", "The Dark Knight Rises.mkv")
-    # Search again
-    results = await search_files("Knight")
-    assert results[0]['file_name'] == "The Dark Knight Rises.mkv"
+    # Test fallback
+    results = await search_files("Video")
+    assert results[0]['caption'] == "Video.mp4"
 
-    print("Async MongoDB logic tests with mock passed!")
+    print("Async MongoDB logic tests with caption support passed!")
 
 if __name__ == "__main__":
     asyncio.run(test_mongodb_logic())

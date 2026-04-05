@@ -1,4 +1,3 @@
-import pymongo
 import re
 from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGO_URI, DATABASE_NAME, COLLECTION_NAME
@@ -9,11 +8,14 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
-async def add_file(file_id, file_name):
+async def add_file(file_id, file_name, caption):
     # Ensure uniqueness using file_id
     await collection.update_one(
         {"file_id": file_id},
-        {"$set": {"file_name": file_name}},
+        {"$set": {
+            "file_name": file_name,
+            "caption": caption or file_name
+        }},
         upsert=True
     )
 
