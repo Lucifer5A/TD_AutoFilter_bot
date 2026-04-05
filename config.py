@@ -9,7 +9,7 @@ SEARCH_CHANNEL_ID = -1001234567890  # Replace with actual private channel ID
 START_TEXT = "Send any file name to search 🔍"
 
 # Database Settings
-MONGO_URI = "mongodb://localhost:27017"  # Replace with actual MongoDB URI
+MONGO_URI = "mongodb+srv://tdanimehub_db_user:cPdMT253KSZpE11Z@helper.wallqjf.mongodb.net/?retryWrites=true&w=majority&appName=Helper"
 DB_NAME = "file_store_db"
 COLLECTION_NAME = "files"
 

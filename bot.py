@@ -31,7 +31,7 @@ async def channel_index_handler(client: Client, message: Message):
     else:
         return
 
-    add_file(file_id, file_name)
+    await add_file(file_id, file_name)
 
 # 5 & 7 & 11: Auto search handler
 @bot.on_message(filters.text & filters.private)
@@ -41,7 +41,7 @@ async def auto_search_handler(client: Client, message: Message):
         return
 
     query = message.text
-    results = search_files(query)
+    results = await search_files(query)
 
     if not results:
         # 9: No results found
@@ -76,7 +76,7 @@ async def auto_search_handler(client: Client, message: Message):
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def callback_handler(client: Client, callback_query: CallbackQuery):
     db_id = callback_query.data.split("#")[1]
-    file_info = get_file_by_db_id(db_id)
+    file_info = await get_file_by_db_id(db_id)
 
     if not file_info:
         # 9: File not found during callback
