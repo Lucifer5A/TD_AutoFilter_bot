@@ -19,14 +19,29 @@ async def add_file(file_id, file_name, caption):
         upsert=True
     )
 
-async def search_files(query, limit=10):
-    # Escape query for regex to prevent injection/crashes
+async def search_files(query, filter_text=None, skip=0, limit=10):
+    # Escape query and filter_text for regex
     escaped_query = re.escape(query)
+
+    # Construct combined regex search if filter exists
+    if filter_text:
+        escaped_filter = re.escape(filter_text)
+        # Search for query.*filter to find both in the file_name
+        regex_pattern = f"{escaped_query}.*{escaped_filter}"
+    else:
+        regex_pattern = escaped_query
+
     # Case-insensitive regex search
-    cursor = collection.find(
-        {"file_name": {"$regex": escaped_query, "$options": "i"}}
-    )
-    return await cursor.to_list(length=limit)
+    filter_obj = {"file_name": {"$regex": regex_pattern, "$options": "i"}}
+
+    # Total count for pagination
+    total_count = await collection.count_documents(filter_obj)
+
+    # Fetch results with pagination
+    cursor = collection.find(filter_obj).skip(skip).limit(limit)
+    results = await cursor.to_list(length=limit)
+
+    return results, total_count
 
 async def get_file_by_db_id(db_id):
     try:

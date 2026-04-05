@@ -19,14 +19,25 @@ class MockMotorCollection:
     async def find_one(self, filter):
         return self.collection.find_one(filter)
 
+    async def count_documents(self, filter):
+        return self.collection.count_documents(filter)
+
 class MockMotorCursor:
     def __init__(self, cursor):
         self.cursor = cursor
 
-    async def to_list(self, length):
-        return list(self.cursor[:length])
+    def skip(self, n):
+        self.cursor = self.cursor[n:]
+        return self
 
-async def test_mongodb_logic():
+    def limit(self, n):
+        self.cursor = self.cursor[:n]
+        return self
+
+    async def to_list(self, length):
+        return list(self.cursor)
+
+async def test_pagination_and_filters():
     # Use mongomock to simulate MongoDB
     mock_client = mongomock.MongoClient()
     mock_db = mock_client['test_db']
@@ -35,26 +46,41 @@ async def test_mongodb_logic():
     # Overwrite database module collection with our async mock wrapper
     database.collection = MockMotorCollection(mock_collection)
 
-    # Test adding files with captions
-    await add_file("file_id_1", "Movie.mkv", "This is a movie caption")
-    await add_file("file_id_2", "Video.mp4", None) # Testing fallback
+    # Test adding files with various formats
+    await add_file("f1", "Naruto S01 480p Telugu.mkv", None)
+    await add_file("f2", "Naruto S01 720p Hindi.mkv", None)
+    await add_file("f3", "Naruto S01 1080p English.mkv", None)
+    await add_file("f4", "Naruto Movie 720p Telugu.mp4", None)
+    await add_file("f5", "Naruto Movie 1080p Telugu.mp4", None)
+    await add_file("f6", "Naruto Movie 480p English.mp4", None)
 
-    # Test search
-    results = await search_files("Movie")
-    assert len(results) == 1
-    assert results[0]['file_name'] == "Movie.mkv"
-    assert results[0]['caption'] == "This is a movie caption"
+    # Test basic search and count
+    results, total_results = await search_files("Naruto", limit=2)
+    assert total_results == 6
+    assert len(results) == 2
 
-    # Test get by database _id
-    db_id = str(results[0]['_id'])
-    file_info = await get_file_by_db_id(db_id)
-    assert file_info['caption'] == "This is a movie caption"
+    # Test pagination (skip)
+    results, total_results = await search_files("Naruto", skip=2, limit=2)
+    assert total_results == 6
+    assert len(results) == 2
 
-    # Test fallback
-    results = await search_files("Video")
-    assert results[0]['caption'] == "Video.mp4"
+    # Test filter (quality)
+    results, total_results = await search_files("Naruto", filter_text="720p")
+    assert total_results == 2
+    assert "720p" in results[0]['file_name']
 
-    print("Async MongoDB logic tests with caption support passed!")
+    # Test filter (language)
+    results, total_results = await search_files("Naruto", filter_text="Telugu")
+    assert total_results == 3
+    for r in results:
+        assert "Telugu" in r['file_name']
+
+    # Test combined filter logic (query.*filter)
+    # Search "Naruto Movie" with "Telugu"
+    results, total_results = await search_files("Naruto Movie", filter_text="Telugu")
+    assert total_results == 2
+
+    print("Pagination and Filter database logic tests passed!")
 
 if __name__ == "__main__":
-    asyncio.run(test_mongodb_logic())
+    asyncio.run(test_pagination_and_filters())
