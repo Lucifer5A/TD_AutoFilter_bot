@@ -1,4 +1,3 @@
-import asyncio
 import re
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -36,7 +35,8 @@ async def get_ui(q, qu, l, pg, total, results):
     if nav: buttons.append(nav)
     return InlineKeyboardMarkup(buttons)
 
-@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset", "list_index"]))
+# Exclude commands from search handler
+@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset"]))
 async def initial_search_handler(client: Client, message: Message):
     if getattr(client, "is_indexing", False):
         await safe_reply(message, "**⏳ Please wait, indexing is in progress...**")

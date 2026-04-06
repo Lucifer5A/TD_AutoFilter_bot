@@ -2,5 +2,5 @@ pyrogram
 tgcrypto
 motor
 pymongo
-mongomock
 flask
+gunicorn
