@@ -4,11 +4,11 @@ import os
 
 API_ID = int(os.environ.get("API_ID", 28961091))
 API_HASH = os.environ.get("API_HASH", "fa3796dbdec1efdf151aca5f14815d06")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8579277980:AAHySce2PTH3JQM7stgcUlj59njtfueILx4")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8439412197:AAHrIW_hH48tkimWzEZHivEOYOdQTcmmilM")
 
 # Search Settings
-db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1002598623129))
-START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to CineVerse Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
+db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1003823067419))
+START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to {@bot_name} Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
 MAX_RESULTS = int(os.environ.get("MAX_RESULTS", 10))
 
 # Database Settings
