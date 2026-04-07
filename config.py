@@ -5,7 +5,7 @@ import random
 
 API_ID = int(os.environ.get("API_ID", 28961091))
 API_HASH = os.environ.get("API_HASH", "fa3796dbdec1efdf151aca5f14815d06")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8579277980:AAHwYFeP1rLzDbPSZ9-98lsqSdgXMkQMJ98")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8439412197:AAHrIW_hH48tkimWzEZHivEOYOdQTcmmilM")
 
 # Search Settings
 db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1002598623129))
