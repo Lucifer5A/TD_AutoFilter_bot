@@ -4,6 +4,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQ
 from config import MAX_RESULTS
 from database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
 from utils import safe_edit, safe_reply
+from TDBotDev.forcesub import force_sub
 
 # Helper for stateful search callbacks
 async def pack_search(q, qu, l, pg):
@@ -38,6 +39,10 @@ async def get_ui(q, qu, l, pg, total, results):
 # Exclude commands from search handler
 @Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset"]))
 async def initial_search_handler(client: Client, message: Message):
+    # Mandatory ForceSub Check for ALL activities
+    if not await force_sub(client, message):
+        return
+
     if getattr(client, "is_indexing", False):
         await safe_reply(message, "**⏳ Please wait, indexing is in progress...**")
         return

@@ -12,21 +12,26 @@ TRY_AGAIN_BUTTON_TEXT = "Try Again 🔄"
 SUCCESS_TEXT = "✅ **Thank you for joining! You can now use the bot.**"
 ALERT_TEXT = "❌ You haven't joined all channels yet!"
 
-async def force_sub(client: Client, message: Message):
-    user_id = message.from_user.id
+async def is_subscribed(client: Client, user_id: int):
     if user_id in ADMIN_IDS:
-        return True
+        return True, []
 
-    unjoined_channels = []
+    unjoined = []
     for channel_id in FORCE_SUB_CHANNELS:
         try:
             await client.get_chat_member(channel_id, user_id)
         except UserNotParticipant:
-            unjoined_channels.append(channel_id)
+            unjoined.append(channel_id)
         except Exception:
             continue
 
-    if not unjoined_channels:
+    return (len(unjoined) == 0), unjoined
+
+async def force_sub(client: Client, message: Message):
+    user_id = message.from_user.id
+    subscribed, unjoined_channels = await is_subscribed(client, user_id)
+
+    if subscribed:
         return True
 
     # Generate Buttons
@@ -58,16 +63,9 @@ async def force_sub(client: Client, message: Message):
 @Client.on_callback_query(filters.regex(r"^check_sub$"))
 async def check_sub_callback(client: Client, cb: CallbackQuery):
     user_id = cb.from_user.id
-    unjoined_channels = []
-    for channel_id in FORCE_SUB_CHANNELS:
-        try:
-            await client.get_chat_member(channel_id, user_id)
-        except UserNotParticipant:
-            unjoined_channels.append(channel_id)
-        except Exception:
-            continue
+    subscribed, _ = await is_subscribed(client, user_id)
 
-    if not unjoined_channels:
+    if subscribed:
         # Success: Delete message and send welcome with random image
         await cb.message.delete()
         try:
