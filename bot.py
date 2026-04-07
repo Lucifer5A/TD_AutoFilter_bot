@@ -52,9 +52,10 @@ if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
 
     async def main():
+        print(f"DEBUG: Active db_CHANNEL_ID = {db_CHANNEL_ID}")
         await bot.start()
         try:
-            await bot.send_message(OWNER_ID, "**bot started successfully with ForceSub & Web Service ✅**")
+            await bot.send_message(OWNER_ID, f"**bot started successfully with ForceSub & Web Service ✅**\n\n**Configured Channel ID:** `{db_CHANNEL_ID}`")
         except Exception:
             pass
         await idle()

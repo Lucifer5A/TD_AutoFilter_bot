@@ -1,14 +1,25 @@
 import os
 import random
+from dotenv import load_dotenv
 
 # config.py
+load_dotenv()
 
-API_ID = int(os.environ.get("API_ID", 28961091))
+def get_int(key, default):
+    val = os.environ.get(key)
+    if val:
+        try:
+            return int(val.strip())
+        except ValueError:
+            pass
+    return default
+
+API_ID = get_int("API_ID", 28961091)
 API_HASH = os.environ.get("API_HASH", "fa3796dbdec1efdf151aca5f14815d06")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8439412197:AAHrIW_hH48tkimWzEZHivEOYOdQTcmmilM")
 
 # Search Settings
-db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1002598623129))
+db_CHANNEL_ID = get_int("db_CHANNEL_ID", -1002598623129)
 START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to CineVerse Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
 MAX_RESULTS = int(os.environ.get("MAX_RESULTS", 10))
 
@@ -18,12 +29,12 @@ DATABASE_NAME = os.environ.get("DATABASE_NAME", "autofilebot")
 COLLECTION_NAME = "files"
 
 # Optional settings
-OWNER_ID = int(os.environ.get("OWNER_ID", 1573111356))
-ADMINS = [int(x) for x in os.environ.get("ADMINS", "1573111356").split(",") if x]
+OWNER_ID = get_int("OWNER_ID", 1573111356)
+ADMINS = [int(x.strip()) for x in os.environ.get("ADMINS", "1573111356").split(",") if x.strip()]
 
 # Force Subscribe Settings
 # Updated to -1002497059972 as per user request
-FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1002497059972").split(",") if x]
+FORCE_SUB_CHANNELS = [int(x.strip()) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1002497059972").split(",") if x.strip()]
 ADMIN_IDS = ADMINS + [OWNER_ID]
 FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channels to use this bot!**\n\nDue to high server load, only subscribers can search files.")
 

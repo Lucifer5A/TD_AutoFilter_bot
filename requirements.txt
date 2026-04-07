@@ -4,3 +4,4 @@ motor
 pymongo
 flask
 gunicorn
+python-dotenv
