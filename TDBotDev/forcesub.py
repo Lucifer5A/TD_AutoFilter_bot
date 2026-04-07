@@ -29,8 +29,11 @@ async def is_subscribed(client: Client, user_id: int):
 
     return (len(unjoined) == 0), unjoined
 
-async def force_sub(client: Client, message: Message):
-    user_id = message.from_user.id
+async def force_sub(client: Client, message: Message, user_id: int = None):
+    # Use user_id if provided (for callbacks), else get from message
+    if not user_id:
+        user_id = message.from_user.id
+
     subscribed, unjoined_channels = await is_subscribed(client, user_id)
 
     if subscribed:
@@ -47,24 +50,30 @@ async def force_sub(client: Client, message: Message):
                 if chat.username:
                     invite_link = f"https://t.me/{chat.username}"
                 else:
-                    # If private and no link, we can't show button
-                    continue
+                    # If private and no link, attempt to export one
+                    try:
+                        invite_link = await client.export_chat_invite_link(chat_id)
+                    except Exception:
+                        # If still no link, we'll just use the ID or title as placeholder
+                        # But typically we need a URL for the button.
+                        continue
 
             buttons.append([InlineKeyboardButton(JOIN_BUTTON_TEXT, url=invite_link)])
         except Exception as e:
             print(f"Error fetching chat {chat_id}: {e}")
             continue
 
-    if not buttons:
-        # If no join buttons could be generated, allow the user to proceed
-        return True
-
+    # ALWAYS block the user if they are not subscribed, even if buttons fail to generate
+    # We add the "Try Again" button at minimum.
     buttons.append([InlineKeyboardButton(TRY_AGAIN_BUTTON_TEXT, callback_data="check_sub")])
+
+    # Determine where to send/edit the message
+    chat_id = message.chat.id if hasattr(message, "chat") else message.message.chat.id
 
     # Send ForceSub UI with random image
     try:
         await client.send_photo(
-            chat_id=message.chat.id,
+            chat_id=chat_id,
             photo=random.choice(PICS),
             caption=FORCE_SUB_TEXT,
             reply_markup=InlineKeyboardMarkup(buttons)

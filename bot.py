@@ -6,6 +6,7 @@ from config import API_ID, API_HASH, BOT_TOKEN, db_CHANNEL_ID, OWNER_ID
 from database import add_file, get_file_by_db_id
 from utils import safe_reply
 from app import app
+from TDBotDev.forcesub import force_sub
 
 # Initialize Bot
 bot = Client(
@@ -34,6 +35,10 @@ async def channel_index_handler(client, message):
 # Centralized File Delivery Callback
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def file_callback_handler(client, cb):
+    # Force Subscribe Check
+    if not await force_sub(client, cb.message, user_id=cb.from_user.id):
+        return
+
     db_id = cb.data.split("#")[1]
     file_info = await get_file_by_db_id(db_id)
     if not file_info:

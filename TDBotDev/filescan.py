@@ -60,6 +60,10 @@ async def initial_search_handler(client: Client, message: Message):
 
 @Client.on_callback_query(filters.regex(r"^smenu#"))
 async def search_filter_menu_handler(client, cb: CallbackQuery):
+    # Force Subscribe Check
+    if not await force_sub(client, cb.message, user_id=cb.from_user.id):
+        return
+
     key = cb.data.split("#")[1]
     state = await get_nav_state(key)
     if not state:
@@ -80,6 +84,10 @@ async def search_filter_menu_handler(client, cb: CallbackQuery):
 
 @Client.on_callback_query(filters.regex(r"^spage#"))
 async def search_pagination_handler(client, cb: CallbackQuery):
+    # Force Subscribe Check
+    if not await force_sub(client, cb.message, user_id=cb.from_user.id):
+        return
+
     key = cb.data.split("#")[1]
     state = await get_nav_state(key)
     if not state:
