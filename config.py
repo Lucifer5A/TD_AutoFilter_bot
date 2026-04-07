@@ -28,12 +28,13 @@ db_CHANNEL_ID = get_int("db_CHANNEL_ID", -1003823067419)
 
 # =================================================================
 START_TEXT = """
-**🎬 Welcome to Movie Search Bot!**
+**🎬 Welcome to Movie & Anime Search Bot!**
 
 **Find movies, series, and files instantly — fast, simple, and reliable.**
 
 ✨ **What you get:**
-• ⚡ Fast and accurate results  
+• ⚡ Fast and accurate results 
+• 📜 movie, Animes & Cartoon 
 • 🔥 Premium quality content  
 • 📱 Seamless user experience  
 • 🔒 Secure and private usage  
