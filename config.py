@@ -1,21 +1,47 @@
 import os
+import random
 
 # config.py
 
 API_ID = int(os.environ.get("API_ID", 28961091))
 API_HASH = os.environ.get("API_HASH", "fa3796dbdec1efdf151aca5f14815d06")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8439412197:AAHrIW_hH48tkimWzEZHivEOYOdQTcmmilM")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8579277980:AAHwYFeP1rLzDbPSZ9-98lsqSdgXMkQMJ98")
 
 # Search Settings
-db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1003823067419))
-START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to {@bot_name} Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
+db_CHANNEL_ID = int(os.environ.get("db_CHANNEL_ID", -1002598623129))
+START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to CineVerse Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
 MAX_RESULTS = int(os.environ.get("MAX_RESULTS", 10))
 
 # Database Settings
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://tdanimehub_db_user:cPdMT253KSZpE11Z@helper.wallqjf.mongodb.net/?retryWrites=true&w=majority&appName=Helper")
 DATABASE_NAME = os.environ.get("DATABASE_NAME", "autofilebot")
-COLLECTION_NAME = os.environ.get("COLLECTION_NAME", "files")
+COLLECTION_NAME = "files"
 
 # Optional settings
 OWNER_ID = int(os.environ.get("OWNER_ID", 1573111356))
 ADMINS = [int(x) for x in os.environ.get("ADMINS", "1573111356").split(",") if x]
+
+# Force Subscribe Settings
+FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1002598623129").split(",") if x]
+ADMIN_IDS = ADMINS + [OWNER_ID]
+FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channels to use this bot!**\n\nDue to high server load, only subscribers can search files.")
+
+# UI Images
+PICS = [
+    "https://ibb.co/39zW3dNh",
+    "https://ibb.co/v4FX9rMN",
+    "https://ibb.co/8L9rDmB4",
+    "https://ibb.co/kVTGm4Rn",
+    "https://ibb.co/Hff6FyNH",
+    "https://ibb.co/DDRzKfv5",
+    "https://ibb.co/Y7ds8xGg",
+    "https://ibb.co/0jY0HHND",
+    "https://ibb.co/Z1kCz73X"
+]
+
+def get_random_pic():
+    return random.choice(PICS)
+
+# Initial images
+START_PIC = PICS[0]
+FORCE_PIC = PICS[1]

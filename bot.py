@@ -28,6 +28,9 @@ async def channel_index_handler(client, message):
     file_name = getattr(media, "file_name", "document_file")
     await add_file(file_id, file_name, message.caption, message_id=message.id, channel_id=db_CHANNEL_ID)
 
+# Callback routing - handlers are now in plugins
+# But centralized f# stays here for stability across all modes.
+
 # Centralized File Delivery Callback
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def file_callback_handler(client, cb):
@@ -51,7 +54,7 @@ if __name__ == "__main__":
     async def main():
         await bot.start()
         try:
-            await bot.send_message(OWNER_ID, "**bot started successfully with Web Service ✅**")
+            await bot.send_message(OWNER_ID, "**bot started successfully with ForceSub & Web Service ✅**")
         except Exception:
             pass
         await idle()
