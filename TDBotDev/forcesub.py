@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from pyrogram.errors import UserNotParticipant, PeerIdInvalid, ChatAdminRequired
 from config import FORCE_SUB_CHANNELS, ADMIN_IDS, FORCE_SUB_TEXT, PICS, START_TEXT
-from utils import safe_reply
+from utils import safe_reply, style_text
 
 # Button Labels & Extra Texts
 JOIN_BUTTON_TEXT = "Join Channel 🔗"
@@ -71,15 +71,16 @@ async def force_sub(client: Client, message: Message, user_id: int = None):
     chat_id = message.chat.id if hasattr(message, "chat") else message.message.chat.id
 
     # Send ForceSub UI with random image
+    styled_fs = style_text(FORCE_SUB_TEXT)
     try:
         await client.send_photo(
             chat_id=chat_id,
             photo=random.choice(PICS),
-            caption=FORCE_SUB_TEXT,
+            caption=styled_fs,
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     except Exception:
-        await safe_reply(message, FORCE_SUB_TEXT, reply_markup=InlineKeyboardMarkup(buttons))
+        await safe_reply(message, styled_fs, reply_markup=InlineKeyboardMarkup(buttons))
 
     return False
 
@@ -94,16 +95,17 @@ async def check_sub_callback(client: Client, cb: CallbackQuery):
 
     if subscribed:
         from TDBotDev.start import get_start_buttons
+        styled_start = style_text(START_TEXT)
         await cb.message.delete()
         try:
             await client.send_photo(
                 chat_id=cb.message.chat.id,
                 photo=random.choice(PICS),
-                caption=START_TEXT,
+                caption=styled_start,
                 reply_markup=get_start_buttons()
             )
         except:
-            await client.send_message(cb.message.chat.id, START_TEXT, reply_markup=get_start_buttons())
+            await client.send_message(cb.message.chat.id, styled_start, reply_markup=get_start_buttons())
         await cb.answer(SUCCESS_TEXT.replace("**", ""), show_alert=False)
     else:
         await cb.answer(ALERT_TEXT, show_alert=True)

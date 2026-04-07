@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from config import MAX_RESULTS
 from database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
-from utils import safe_edit, safe_reply
+from utils import safe_edit, safe_reply, style_text
 from TDBotDev.forcesub import force_sub
 
 # Helper for stateful search callbacks
@@ -44,17 +44,17 @@ async def initial_search_handler(client: Client, message: Message):
         return
 
     if getattr(client, "is_indexing", False):
-        await safe_reply(message, "**⏳ Please wait, indexing is in progress...**")
+        await safe_reply(message, style_text("⏳ Please wait, indexing is in progress..."))
         return
     query = message.text
-    status = await safe_reply(message, f"**🔍 Searching for \"{query}\"... Please wait**")
+    status = await safe_reply(message, style_text(f"🔍 Searching for \"{query}\"... Please wait"))
     if not status: return
 
     results, total = await search_files_fuzzy(query, limit=MAX_RESULTS)
     if not results:
-        await safe_edit(status, f"**No files found 😔**")
+        await safe_edit(status, style_text("No files found 😔"))
         return
-    text = f"**🔍 Found {total} results for: \"{query}\"**\n\n**Page 1**\n\n**Click on a file to get it:**"
+    text = style_text(f"🔍 Found {total} results for: \"{query}\"\n\nPage 1\n\nClick on a file to get it:")
     markup = await get_ui(query, "None", "None", 0, total, results)
     await safe_edit(status, text, reply_markup=markup)
 
@@ -96,9 +96,9 @@ async def search_pagination_handler(client, cb: CallbackQuery):
     q, qu, l, pg = state["q"], state["qu"], state["l"], state["pg"]
     results, total = await search_files_fuzzy(q, quality=qu, language=l, skip=pg*MAX_RESULTS, limit=MAX_RESULTS)
     if not results:
-        await safe_edit(cb.message, f"**❌ No matching files found**")
+        await safe_edit(cb.message, style_text("❌ No matching files found"))
         return
     query_disp = f"{q} {qu if qu != 'None' else ''} {l if l != 'None' else ''}".strip()
-    text = f"**🔍 Found {total} results for: \"{query_disp}\"**\n\n**Page {pg+1}**\n\n**Click on a file to get it:**"
+    text = style_text(f"🔍 Found {total} results for: \"{query_disp}\"\n\nPage {pg+1}\n\nClick on a file to get it:")
     markup = await get_ui(q, qu, l, pg, total, results)
     await safe_edit(cb.message, text, reply_markup=markup)

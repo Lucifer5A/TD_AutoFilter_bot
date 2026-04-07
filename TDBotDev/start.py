@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import START_TEXT, PICS, LOG_CHANNEL_ID, UPDATES
 from TDBotDev.forcesub import force_sub
-from utils import safe_reply
+from utils import safe_reply, style_text
 import datetime
 
 # Helper to generate the main start menu keyboard
@@ -11,8 +11,10 @@ def get_start_buttons():
     buttons = [
         [
             InlineKeyboardButton("📖 Help", callback_data="help_menu"),
-            InlineKeyboardButton("🏚️ Updates", callback_data="updates_menu"),
-            InlineKeyboardButton("❄️ About", callback_data="about_menu")
+            InlineKeyboardButton("❄️ Update", url=UPDATES),
+        ],
+        [
+            InlineKeyboardButton("About ☘️", callback_data="about_menu")
         ]
     ]
     return InlineKeyboardMarkup(buttons)
@@ -38,12 +40,13 @@ async def start_handler(client, message):
         print(f"Log Error: {e}")
 
     # Send random START image with welcome message and menu buttons
+    styled_start = style_text(START_TEXT)
     try:
         await client.send_photo(
             chat_id=message.chat.id,
             photo=random.choice(PICS),
-            caption=START_TEXT,
+            caption=styled_start,
             reply_markup=get_start_buttons()
         )
     except Exception:
-        await safe_reply(message, START_TEXT, reply_markup=get_start_buttons())
+        await safe_reply(message, styled_start, reply_markup=get_start_buttons())
