@@ -2,7 +2,7 @@ import asyncio
 import random
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
-from pyrogram.errors import UserNotParticipant
+from pyrogram.errors import UserNotParticipant, PeerIdInvalid, ChatAdminRequired
 from config import FORCE_SUB_CHANNELS, ADMIN_IDS, FORCE_SUB_TEXT, PICS, START_TEXT
 from utils import safe_reply
 
@@ -22,7 +22,9 @@ async def is_subscribed(client: Client, user_id: int):
             await client.get_chat_member(channel_id, user_id)
         except UserNotParticipant:
             unjoined.append(channel_id)
-        except Exception:
+        except Exception as e:
+            # If bot is not admin or channel invalid, we skip check for that channel to avoid blocking user
+            print(f"ForceSub Error for {channel_id}: {e}")
             continue
 
     return (len(unjoined) == 0), unjoined
@@ -38,12 +40,24 @@ async def force_sub(client: Client, message: Message):
     buttons = []
     for chat_id in unjoined_channels:
         try:
+            # Try to get invite link automatically
             chat = await client.get_chat(chat_id)
-            invite_link = chat.invite_link or (f"https://t.me/{chat.username}" if chat.username else None)
-            if invite_link:
-                buttons.append([InlineKeyboardButton(JOIN_BUTTON_TEXT, url=invite_link)])
-        except:
+            invite_link = chat.invite_link
+            if not invite_link:
+                if chat.username:
+                    invite_link = f"https://t.me/{chat.username}"
+                else:
+                    # If private and no link, we can't show button
+                    continue
+
+            buttons.append([InlineKeyboardButton(JOIN_BUTTON_TEXT, url=invite_link)])
+        except Exception as e:
+            print(f"Error fetching chat {chat_id}: {e}")
             continue
+
+    if not buttons:
+        # If no join buttons could be generated, allow the user to proceed
+        return True
 
     buttons.append([InlineKeyboardButton(TRY_AGAIN_BUTTON_TEXT, callback_data="check_sub")])
 
@@ -63,10 +77,13 @@ async def force_sub(client: Client, message: Message):
 @Client.on_callback_query(filters.regex(r"^check_sub$"))
 async def check_sub_callback(client: Client, cb: CallbackQuery):
     user_id = cb.from_user.id
+
+    # Small delay to ensure Telegram DB consistency
+    await asyncio.sleep(1)
+
     subscribed, _ = await is_subscribed(client, user_id)
 
     if subscribed:
-        # Success: Delete message and send welcome with random image
         await cb.message.delete()
         try:
             await client.send_photo(
