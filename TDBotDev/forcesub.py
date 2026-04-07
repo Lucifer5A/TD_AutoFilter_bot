@@ -93,15 +93,17 @@ async def check_sub_callback(client: Client, cb: CallbackQuery):
     subscribed, _ = await is_subscribed(client, user_id)
 
     if subscribed:
+        from TDBotDev.start import get_start_buttons
         await cb.message.delete()
         try:
             await client.send_photo(
                 chat_id=cb.message.chat.id,
                 photo=random.choice(PICS),
-                caption=START_TEXT
+                caption=START_TEXT,
+                reply_markup=get_start_buttons()
             )
         except:
-            await client.send_message(cb.message.chat.id, START_TEXT)
+            await client.send_message(cb.message.chat.id, START_TEXT, reply_markup=get_start_buttons())
         await cb.answer(SUCCESS_TEXT.replace("**", ""), show_alert=False)
     else:
         await cb.answer(ALERT_TEXT, show_alert=True)

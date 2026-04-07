@@ -7,6 +7,7 @@ from database import add_file, get_file_by_db_id
 from utils import safe_reply
 from app import app
 from TDBotDev.forcesub import force_sub
+from config import LOG_CHANNEL_ID
 
 # Initialize Bot
 bot = Client(
@@ -45,11 +46,34 @@ async def file_callback_handler(client, cb):
         await cb.answer("File not available", show_alert=True)
         return
     file_id = file_info['file_id']
-    caption = file_info.get('caption') or file_info['file_name']
+    file_name = file_info['file_name']
+    caption = file_info.get('caption') or file_name
+
     try:
-        await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
+        # STEP 1: Send/forward file to LOG_CHANNEL_ID
+        # We forward it to ensure the log channel has the copy and it stays "clean" for step 2
+        log_msg = await client.send_document(
+            chat_id=LOG_CHANNEL_ID,
+            document=file_id,
+            caption=caption
+        )
+
+        # STEP 2: Forward same file from LOG_CHANNEL_ID to user
+        await log_msg.forward(chat_id=cb.message.chat.id)
+
+        # STEP 3: Log "File sent to user" with details
+        sent_log = (
+            f"✅ **File sent to user**\n\n"
+            f"👤 **User:** {cb.from_user.mention}\n"
+            f"🆔 **ID:** `{cb.from_user.id}`\n"
+            f"📂 **File:** `{file_name}`\n"
+            f"📅 **Time:** `{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`"
+        )
+        await client.send_message(LOG_CHANNEL_ID, sent_log)
+
         await cb.answer()
-    except Exception:
+    except Exception as e:
+        print(f"File Send Error: {e}")
         await cb.answer("Error sending file", show_alert=True)
 
 if __name__ == "__main__":
