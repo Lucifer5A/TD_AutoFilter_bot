@@ -28,10 +28,11 @@ async def broadcast_command_handler(client, message: Message):
     buttons = [[InlineKeyboardButton(style_btn("❌ Cancel"), callback_data="bc_cancel")]]
     await safe_reply(message, style_text(text), reply_markup=InlineKeyboardMarkup(buttons))
 
-@Client.on_message(filters.private & filters.user(ADMIN_IDS) & ~filters.command(["start", "broadcast", "status", "reset", "delete_file", "delete_files"]))
+@Client.on_message(filters.private & filters.user(ADMIN_IDS) & ~filters.command(["start", "broadcast", "status", "reset", "delete_file", "delete_files"]), group=-1)
 async def capture_broadcast_message(client, message: Message):
     user_id = message.from_user.id
     if user_id not in broadcast_state or broadcast_state[user_id]["step"] != "waiting":
+        message.continue_propagation()
         return
 
     broadcast_state[user_id]["step"] = "preview"

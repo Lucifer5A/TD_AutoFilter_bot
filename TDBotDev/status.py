@@ -53,8 +53,10 @@ async def get_status_ui(client, start_time, start_check_time=None):
     ]
     return style_text(text), InlineKeyboardMarkup(buttons)
 
-@Client.on_message(filters.command("status") & filters.user(ADMIN_IDS))
+@Client.on_message(filters.command("status") & filters.private)
 async def status_command_handler(client, message: Message):
+    if message.from_user.id not in ADMIN_IDS:
+        return
     start_time = getattr(client, "start_time", time.time())
     text, markup = await get_status_ui(client, start_time, time.time())
     await safe_reply(message, text, reply_markup=markup)

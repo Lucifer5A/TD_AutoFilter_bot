@@ -1,4 +1,5 @@
 import re
+import time
 import hashlib
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -124,7 +125,7 @@ async def add_user(user_id, name):
     """Adds or updates user in DB."""
     await users_col.update_one(
         {"_id": user_id},
-        {"$set": {"name": name, "last_seen": asyncio.get_event_loop().time()}},
+        {"$set": {"name": name, "last_seen": time.time()}},
         upsert=True
     )
 
