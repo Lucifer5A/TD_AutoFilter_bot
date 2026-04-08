@@ -3,7 +3,7 @@ import os
 import threading
 from pyrogram import Client, filters, idle
 from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, OWNER_ID
-from database import add_file, get_file_by_db_id, search_files_fuzzy, get_nav_state
+from Database.database import add_file, get_file_by_db_id, search_files_fuzzy, get_nav_state
 from utils import safe_reply, parse_duration, auto_delete_messages, style_text, style_btn
 from app import app
 from TDBotDev.forcesub import force_sub

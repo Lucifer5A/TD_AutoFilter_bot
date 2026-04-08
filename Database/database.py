@@ -26,24 +26,38 @@ QUAL_MAP = {
     "4K": ["4k", "2160p"]
 }
 
-# Regex patterns for UI cleaning
-CLEAN_PATTERNS = [
-    r"\[\s?@Team_TD_Links\s?\]",
-    r"\[\s?Team\s?\]",
-    r"\[\s?HDRip\s?\]",
-    r"\[\s?x264\s?\]",
-    r"@\w+",
-    r"\.mkv$",
-    r"\.mp4$",
-    r"\.avi$",
-    r"_",
-    r"\."
-]
-CLEAN_REGEX = re.compile("|".join(CLEAN_PATTERNS), re.IGNORECASE)
-
 def clean_ui_name(file_name):
-    # Rule: NEVER show tags, clean file_name before displaying
-    name = CLEAN_REGEX.sub(" ", file_name)
+    """
+    Cleans filename for UI display. Removes common tags and replaces separators with spaces.
+    """
+    # 1. Remove extension
+    name = re.sub(r"\.(mkv|mp4|avi|webm|ts|m4v)$", "", file_name, flags=re.IGNORECASE)
+
+    # 2. Remove specific known tags (Case Insensitive)
+    tags_to_remove = [
+        r"\[\s?@Team_TD_Links\s?\]",
+        r"\[\s?Team\s?TD\s?Links\s?\]",
+        r"\[\s?Team\s?\]",
+        r"@Team_TD_Links",
+        r"\[\s?HDRip\s?\]",
+        r"\[\s?x264\s?\]",
+        r"\[\s?720p\s?\]",
+        r"\[\s?1080p\s?\]",
+        r"\[\s?480p\s?\]"
+    ]
+    for tag in tags_to_remove:
+        name = re.sub(tag, "", name, flags=re.IGNORECASE)
+
+    # 3. Replace underscores and dots with spaces
+    name = name.replace("_", " ").replace(".", " ")
+
+    # 4. Clean up any remaining telegram handles (that didn't match specific tags)
+    # But only if they are at the start or end to avoid eating movie names
+    name = re.sub(r"^@\w+\s+", "", name)
+    name = re.sub(r"\s+@\w+$", "", name)
+
+    # 5. Final cleanup of double spaces and brackets
+    name = name.replace("[ ]", "").replace("[]", "")
     return " ".join(name.split()).strip()
 
 # Navigation Cache for Callback Data
@@ -104,3 +118,22 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
 async def get_file_by_db_id(db_id):
     try: return await collection.find_one({"_id": ObjectId(db_id)})
     except Exception: return None
+
+async def delete_files_by_ids(file_ids):
+    """Deletes documents matching provided file_ids."""
+    try:
+        res = await collection.delete_many({"file_id": {"$in": file_ids}})
+        return res.deleted_count
+    except Exception as e:
+        print(f"DB Delete Error: {e}")
+        return 0
+
+async def delete_files_by_regex(query):
+    """Deletes documents matching filename using fuzzy regex (consistent with search)."""
+    try:
+        fuzzy_query = ".*".join([re.escape(x) for x in query.split()])
+        res = await collection.delete_many({"file_name": {"$regex": fuzzy_query, "$options": "i"}})
+        return res.deleted_count
+    except Exception as e:
+        print(f"DB Delete Error: {e}")
+        return 0

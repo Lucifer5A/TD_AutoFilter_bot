@@ -2,7 +2,7 @@ import re
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from config import MAX_RESULTS
-from database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
+from Database.database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
 from utils import safe_edit, safe_reply, style_text, style_btn
 from TDBotDev.forcesub import force_sub
 
