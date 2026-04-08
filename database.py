@@ -1,5 +1,6 @@
 import re
 import hashlib
+import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGO_URI, DATABASE_NAME, COLLECTION_NAME
 from bson.objectid import ObjectId
@@ -93,9 +94,11 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
     # Use projection to fetch only required fields
     projection = {"file_name": 1, "file_id": 1, "_id": 1}
 
-    total_count = await collection.count_documents(mongo_filter)
-    cursor = collection.find(mongo_filter, projection).skip(skip).limit(limit)
-    results = await cursor.to_list(length=limit)
+    # Run count and fetch in parallel for speed
+    total_task = collection.count_documents(mongo_filter)
+    results_task = collection.find(mongo_filter, projection).skip(skip).limit(limit).to_list(length=limit)
+
+    total_count, results = await asyncio.gather(total_task, results_task)
     return results, total_count
 
 async def get_file_by_db_id(db_id):

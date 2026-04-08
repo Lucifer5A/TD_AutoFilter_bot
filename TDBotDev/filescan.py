@@ -39,12 +39,26 @@ async def get_ui(q, qu, l, pg, total, results):
         ui_name = clean_ui_name(f['file_name'])
         buttons.append([InlineKeyboardButton(style_btn(ui_name), callback_data=f"f#{db_id}")])
 
+    total_pages = (total + MAX_RESULTS - 1) // MAX_RESULTS
+    current_page = pg + 1
+
     nav = []
+    # Left button logic
     if pg > 0:
-        nav.append(InlineKeyboardButton(style_btn("⬅️ Prev"), callback_data=await pack_search(q, qu, l, pg - 1)))
+        nav.append(InlineKeyboardButton(style_btn("🔙 BACK"), callback_data=await pack_search(q, qu, l, pg - 1)))
+    else:
+        nav.append(InlineKeyboardButton(style_btn("📚 PAGE"), callback_data="pages_info"))
+
+    # Center info
+    nav.append(InlineKeyboardButton(style_btn(f"{current_page} / {total_pages}"), callback_data="pages_info"))
+
+    # Right button logic
     if (pg + 1) * MAX_RESULTS < total:
-        nav.append(InlineKeyboardButton(style_btn("Next ➡️"), callback_data=await pack_search(q, qu, l, pg + 1)))
-    if nav: buttons.append(nav)
+        nav.append(InlineKeyboardButton(style_btn("NEXT 🔜"), callback_data=await pack_search(q, qu, l, pg + 1)))
+    else:
+        nav.append(InlineKeyboardButton(style_btn("PAGE 📚"), callback_data="pages_info"))
+
+    buttons.append(nav)
     return InlineKeyboardMarkup(buttons)
 
 # Exclude commands from search handler
@@ -71,6 +85,8 @@ async def initial_search_handler(client: Client, message: Message):
 
 @Client.on_callback_query(filters.regex(r"^smenu#"))
 async def search_filter_menu_handler(client, cb: CallbackQuery):
+    await cb.answer()
+
     # Force Subscribe Check
     if not await force_sub(client, cb.message, user_id=cb.from_user.id):
         return
@@ -95,6 +111,8 @@ async def search_filter_menu_handler(client, cb: CallbackQuery):
 
 @Client.on_callback_query(filters.regex(r"^spage#"))
 async def search_pagination_handler(client, cb: CallbackQuery):
+    await cb.answer()
+
     # Force Subscribe Check
     if not await force_sub(client, cb.message, user_id=cb.from_user.id):
         return

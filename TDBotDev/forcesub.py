@@ -5,6 +5,11 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, 
 from pyrogram.errors import UserNotParticipant, PeerIdInvalid, ChatAdminRequired
 from config import FORCE_SUB_CHANNELS, ADMIN_IDS, FORCE_SUB_TEXT, PICS, START_TEXT
 from utils import safe_reply, style_text, style_btn
+import time
+
+# Cache for subscription status (user_id: timestamp)
+# Valid for 60 seconds to avoid API spam on every button click
+SUB_CACHE = {}
 
 # Button Labels & Extra Texts
 JOIN_BUTTON_TEXT = "Join Channel 🔗"
@@ -15,6 +20,11 @@ ALERT_TEXT = "❌ You haven't joined all channels yet!"
 async def is_subscribed(client: Client, user_id: int):
     if user_id in ADMIN_IDS:
         return True, []
+
+    # Check Cache
+    if user_id in SUB_CACHE:
+        if time.time() - SUB_CACHE[user_id] < 60:
+            return True, []
 
     unjoined = []
     for channel_id in FORCE_SUB_CHANNELS:
@@ -27,7 +37,11 @@ async def is_subscribed(client: Client, user_id: int):
             print(f"ForceSub Error for {channel_id}: {e}")
             continue
 
-    return (len(unjoined) == 0), unjoined
+    res = (len(unjoined) == 0)
+    if res:
+        SUB_CACHE[user_id] = time.time()
+
+    return res, unjoined
 
 async def force_sub(client: Client, message: Message, user_id: int = None):
     # Use user_id if provided (for callbacks), else get from message
@@ -88,8 +102,12 @@ async def force_sub(client: Client, message: Message, user_id: int = None):
 async def check_sub_callback(client: Client, cb: CallbackQuery):
     user_id = cb.from_user.id
 
+    # Clear cache on manual re-check
+    if user_id in SUB_CACHE:
+        del SUB_CACHE[user_id]
+
     # Small delay to ensure Telegram DB consistency
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.2)
 
     subscribed, _ = await is_subscribed(client, user_id)
 

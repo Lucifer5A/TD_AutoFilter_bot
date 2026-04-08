@@ -7,6 +7,8 @@ from utils import style_text, style_btn
 
 @Client.on_callback_query(filters.regex(r"^(help_menu|about_menu|back_start)$"))
 async def menu_callback_handler(client: Client, cb: CallbackQuery):
+    await cb.answer()
+
     if not await force_sub(client, cb.message, user_id=cb.from_user.id):
         return
 
