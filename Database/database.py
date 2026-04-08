@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
+users_col = db["users"]
 nav_cache = db["nav_cache"]
 
 # Allowed Mappings
@@ -118,6 +119,20 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
 async def get_file_by_db_id(db_id):
     try: return await collection.find_one({"_id": ObjectId(db_id)})
     except Exception: return None
+
+async def add_user(user_id, name):
+    """Adds or updates user in DB."""
+    await users_col.update_one(
+        {"_id": user_id},
+        {"$set": {"name": name, "last_seen": asyncio.get_event_loop().time()}},
+        upsert=True
+    )
+
+async def get_total_users():
+    return await users_col.count_documents({})
+
+async def get_all_users():
+    return users_col.find({})
 
 async def delete_files_by_ids(file_ids):
     """Deletes documents matching provided file_ids."""

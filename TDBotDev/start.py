@@ -3,6 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import START_TEXT, PICS, UPDATES
 from TDBotDev.forcesub import force_sub
+from Database.database import add_user
 from utils import safe_reply, style_text, style_btn
 import datetime
 
@@ -21,6 +22,9 @@ def get_start_buttons():
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start_handler(client, message):
+    # Add user to database
+    await add_user(message.from_user.id, message.from_user.first_name)
+
     if not await force_sub(client, message):
         return
 

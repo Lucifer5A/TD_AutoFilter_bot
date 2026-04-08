@@ -10,6 +10,7 @@ from TDBotDev.forcesub import force_sub
 from config import AUTO_DELETE_TIME, DELETE_MESSAGE_TEXT, UPDATES
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
+import time
 
 # Initialize Bot
 bot = Client(
@@ -127,6 +128,7 @@ if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
 
     async def main():
+        bot.start_time = time.time()
         print(f"DEBUG: Active DB_CHANNEL_ID = {DB_CHANNEL_ID}")
         await bot.start()
         try:
