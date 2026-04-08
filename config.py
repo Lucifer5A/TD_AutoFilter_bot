@@ -34,6 +34,10 @@ FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channe
 # Updates Link
 UPDATES = os.environ.get("UPDATES", "https://t.me/Team_TD_Links")
 
+# Auto-Delete Settings
+AUTO_DELETE_TIME = os.environ.get("AUTO_DELETE_TIME", "1h") # Format: 30s, 1m, 1h, 1d or '0' to disable
+DELETE_MESSAGE_TEXT = "⚠️ **Important:**\n\n*All Messages will be deleted after {time}. Please save or forward these messages to your personal saved messages to avoid losing them!*"
+
 # UI Images
 PICS = [
     "https://ibb.co/39zW3dNh",

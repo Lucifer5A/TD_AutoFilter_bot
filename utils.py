@@ -68,3 +68,35 @@ def style_btn(text: str):
         styled_chars.append(small_caps.get(char, char))
 
     return "".join(styled_chars)
+
+def parse_duration(duration_str: str):
+    """
+    Parses duration string like '30s', '1m', '1h', '1d' into seconds.
+    Returns 0 if '0' or invalid.
+    """
+    if not duration_str or duration_str == "0":
+        return 0
+
+    unit = duration_str[-1].lower()
+    try:
+        value = int(duration_str[:-1])
+    except ValueError:
+        return 0
+
+    if unit == 's': return value
+    if unit == 'm': return value * 60
+    if unit == 'h': return value * 3600
+    if unit == 'd': return value * 86400
+
+    return 0
+
+async def auto_delete_messages(client, chat_id, message_ids, delay):
+    """
+    Sleeps for delay and deletes provided message_ids.
+    """
+    if delay <= 0: return
+    await asyncio.sleep(delay)
+    try:
+        await client.delete_messages(chat_id, message_ids)
+    except Exception:
+        pass
