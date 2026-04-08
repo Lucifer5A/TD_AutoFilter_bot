@@ -7,7 +7,6 @@ from database import add_file, get_file_by_db_id, search_files_fuzzy, get_nav_st
 from utils import safe_reply
 from app import app
 from TDBotDev.forcesub import force_sub
-from config import LOG_CHANNEL_ID
 import datetime
 
 # Initialize Bot
@@ -70,17 +69,8 @@ async def send_all_callback_handler(client, cb):
         caption = full_info.get('caption') or file_name
 
         try:
-            # Re-use the 3-step delivery logic
-            log_msg = await client.send_document(chat_id=LOG_CHANNEL_ID, document=file_id, caption=caption)
-            await log_msg.forward(chat_id=cb.message.chat.id)
-            sent_log = (
-                f"✅ **Batch File sent to user**\n\n"
-                f"👤 **User:** {cb.from_user.mention}\n"
-                f"🆔 **ID:** `{cb.from_user.id}`\n"
-                f"📂 **File:** `{file_name}`\n"
-                f"📅 **Time:** `{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`"
-            )
-            await client.send_message(LOG_CHANNEL_ID, sent_log)
+            # Send file directly to user
+            await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
             # Small delay to avoid flood
             await asyncio.sleep(0.5)
         except Exception as e:
@@ -102,27 +92,8 @@ async def file_callback_handler(client, cb):
     caption = file_info.get('caption') or file_name
 
     try:
-        # STEP 1: Send/forward file to LOG_CHANNEL_ID
-        # We forward it to ensure the log channel has the copy and it stays "clean" for step 2
-        log_msg = await client.send_document(
-            chat_id=LOG_CHANNEL_ID,
-            document=file_id,
-            caption=caption
-        )
-
-        # STEP 2: Forward same file from LOG_CHANNEL_ID to user
-        await log_msg.forward(chat_id=cb.message.chat.id)
-
-        # STEP 3: Log "File sent to user" with details
-        sent_log = (
-            f"✅ **File sent to user**\n\n"
-            f"👤 **User:** {cb.from_user.mention}\n"
-            f"🆔 **ID:** `{cb.from_user.id}`\n"
-            f"📂 **File:** `{file_name}`\n"
-            f"📅 **Time:** `{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`"
-        )
-        await client.send_message(LOG_CHANNEL_ID, sent_log)
-
+        # Send file directly to user
+        await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
         await cb.answer()
     except Exception as e:
         print(f"File Send Error: {e}")

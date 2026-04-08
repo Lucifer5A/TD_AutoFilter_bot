@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQ
 from config import START_TEXT, HELP_TEXT, ABOUT_TEXT, UPDATES
 from TDBotDev.start import get_start_buttons
 from TDBotDev.forcesub import force_sub
-from utils import style_text
+from utils import style_text, style_btn
 
 @Client.on_callback_query(filters.regex(r"^(help_menu|about_menu|back_start)$"))
 async def menu_callback_handler(client: Client, cb: CallbackQuery):

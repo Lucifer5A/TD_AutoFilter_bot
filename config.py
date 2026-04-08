@@ -31,8 +31,7 @@ FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-100
 ADMIN_IDS = ADMINS + [OWNER_ID]
 FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channels to use this bot!**\n\nDue to high server load, only subscribers can search files.")
 
-# Log Channel and Updates Link
-LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", -1002166649887))
+# Updates Link
 UPDATES = os.environ.get("UPDATES", "https://t.me/Team_TD_Links")
 
 # UI Images
