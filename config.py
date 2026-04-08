@@ -5,12 +5,12 @@ from dotenv import load_dotenv
 # config.py
 load_dotenv()
 
-API_ID = int(os.environ.get("API_ID", 0))
-API_HASH = os.environ.get("API_HASH", "")
+API_ID = int(os.environ.get("API_ID", 28961091))
+API_HASH = os.environ.get("API_HASH", "fa3796dbdec1efdf151aca5f14815d06")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
 # Search Settings
-DB_CHANNEL_ID = int(os.environ.get("DB_CHANNEL_ID", 0))
+DB_CHANNEL_ID = int(os.environ.get("DB_CHANNEL_ID", -1003823067419))
 START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to CineVerse Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
 MAX_RESULTS = int(os.environ.get("MAX_RESULTS", 10))
 
@@ -37,7 +37,7 @@ FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channe
 UPDATES = os.environ.get("UPDATES", "https://t.me/Team_TD_Links")
 
 # Auto-Delete Settings
-AUTO_DELETE_TIME = os.environ.get("AUTO_DELETE_TIME", "1h") # Format: 30s, 1m, 1h, 1d or '0' to disable
+AUTO_DELETE_TIME = os.environ.get("AUTO_DELETE_TIME", "30m") # Format: 30s, 1m, 1h, 1d or '0' to disable
 DELETE_MESSAGE_TEXT = "⚠️ **Important:**\n\n*All Messages will be deleted after {time}. Please save or forward these messages to your personal saved messages to avoid losing them!*"
 
 # UI Images
