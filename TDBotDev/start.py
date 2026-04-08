@@ -3,18 +3,18 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import START_TEXT, PICS, LOG_CHANNEL_ID, UPDATES
 from TDBotDev.forcesub import force_sub
-from utils import safe_reply, style_text
+from utils import safe_reply, style_text, style_btn
 import datetime
 
 # Helper to generate the main start menu keyboard
 def get_start_buttons():
     buttons = [
         [
-            InlineKeyboardButton("📖 Help", callback_data="help_menu"),
-            InlineKeyboardButton("❄️ Update", url=UPDATES),
+            InlineKeyboardButton(style_btn("📖 Help"), callback_data="help_menu"),
+            InlineKeyboardButton(style_btn("❄️ Update"), url=UPDATES),
         ],
         [
-            InlineKeyboardButton("About ☘️", callback_data="about_menu")
+            InlineKeyboardButton(style_btn("About ☘️"), callback_data="about_menu")
         ]
     ]
     return InlineKeyboardMarkup(buttons)

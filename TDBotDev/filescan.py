@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from config import MAX_RESULTS
 from database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
-from utils import safe_edit, safe_reply, style_text
+from utils import safe_edit, safe_reply, style_text, style_btn
 from TDBotDev.forcesub import force_sub
 
 # Helper for stateful search callbacks
@@ -17,22 +17,33 @@ async def pack_menu(m_type, q, qu, l, pg):
     key = await save_nav_state(state)
     return f"smenu#{key}"
 
+async def pack_all(q, qu, l, pg):
+    state = {"q": q, "qu": qu, "l": l, "pg": pg}
+    key = await save_nav_state(state)
+    return f"sall#{key}"
+
 async def get_ui(q, qu, l, pg, total, results):
     buttons = []
-    # TOP BUTTONS
+    # Row 1: Language (Centered)
     buttons.append([
-        InlineKeyboardButton("Quality ⚡", callback_data=await pack_menu("q", q, qu, l, pg)),
-        InlineKeyboardButton("Language 🎵", callback_data=await pack_menu("l", q, qu, l, pg))
+        InlineKeyboardButton(style_btn("🎵 Language 🎵"), callback_data=await pack_menu("l", q, qu, l, pg))
     ])
+    # Row 2: Quality, All
+    buttons.append([
+        InlineKeyboardButton(style_btn("✨ Quality ✨"), callback_data=await pack_menu("q", q, qu, l, pg)),
+        InlineKeyboardButton(style_btn("🔎 All"), callback_data=await pack_all(q, qu, l, pg))
+    ])
+
     for f in results:
         db_id = str(f['_id'])
         ui_name = clean_ui_name(f['file_name'])
-        buttons.append([InlineKeyboardButton(ui_name, callback_data=f"f#{db_id}")])
+        buttons.append([InlineKeyboardButton(style_btn(ui_name), callback_data=f"f#{db_id}")])
+
     nav = []
     if pg > 0:
-        nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=await pack_search(q, qu, l, pg - 1)))
+        nav.append(InlineKeyboardButton(style_btn("⬅️ Prev"), callback_data=await pack_search(q, qu, l, pg - 1)))
     if (pg + 1) * MAX_RESULTS < total:
-        nav.append(InlineKeyboardButton("Next ➡️", callback_data=await pack_search(q, qu, l, pg + 1)))
+        nav.append(InlineKeyboardButton(style_btn("Next ➡️"), callback_data=await pack_search(q, qu, l, pg + 1)))
     if nav: buttons.append(nav)
     return InlineKeyboardMarkup(buttons)
 
@@ -73,13 +84,13 @@ async def search_filter_menu_handler(client, cb: CallbackQuery):
     buttons = []
     if m_type == "q":
         for opt in ["480p", "720p", "1080p", "4K"]:
-            buttons.append([InlineKeyboardButton(opt, callback_data=await pack_search(q, opt, l, 0))])
+            buttons.append([InlineKeyboardButton(style_btn(opt), callback_data=await pack_search(q, opt, l, 0))])
     else:
         langs = ["Telugu", "Tamil", "Hindi", "English", "Multiple"]
         for opt in langs:
-            buttons.append([InlineKeyboardButton(opt, callback_data=await pack_search(q, qu, opt, 0))])
+            buttons.append([InlineKeyboardButton(style_btn(opt), callback_data=await pack_search(q, qu, opt, 0))])
     back_cb = await pack_search(q, qu, l, pg)
-    buttons.append([InlineKeyboardButton("🔙 Back", callback_data=back_cb)])
+    buttons.append([InlineKeyboardButton(style_btn("🔙 Back"), callback_data=back_cb)])
     await cb.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(buttons))
 
 @Client.on_callback_query(filters.regex(r"^spage#"))

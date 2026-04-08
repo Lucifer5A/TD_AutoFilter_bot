@@ -3,7 +3,7 @@ import os
 import threading
 from pyrogram import Client, filters, idle
 from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, OWNER_ID
-from database import add_file, get_file_by_db_id
+from database import add_file, get_file_by_db_id, search_files_fuzzy, get_nav_state
 from utils import safe_reply
 from app import app
 from TDBotDev.forcesub import force_sub
@@ -40,6 +40,52 @@ async def channel_index_handler(client, message):
 # But centralized f# stays here for stability across all modes.
 
 # Centralized File Delivery Callback
+@bot.on_callback_query(filters.regex(r"^sall#"))
+async def send_all_callback_handler(client, cb):
+    # Force Subscribe Check
+    if not await force_sub(client, cb.message, user_id=cb.from_user.id):
+        return
+
+    key = cb.data.split("#")[1]
+    state = await get_nav_state(key)
+    if not state:
+        await cb.answer("Session expired", show_alert=True)
+        return
+
+    from config import MAX_RESULTS
+    q, qu, l, pg = state["q"], state["qu"], state["l"], state["pg"]
+    results, _ = await search_files_fuzzy(q, quality=qu, language=l, skip=pg*MAX_RESULTS, limit=MAX_RESULTS)
+
+    if not results:
+        await cb.answer("No files to send", show_alert=True)
+        return
+
+    await cb.answer("Sending all files...", show_alert=False)
+
+    for f in results:
+        file_id = f['file_id']
+        file_name = f['file_name']
+        # Fetch full info for caption
+        full_info = await get_file_by_db_id(str(f['_id']))
+        caption = full_info.get('caption') or file_name
+
+        try:
+            # Re-use the 3-step delivery logic
+            log_msg = await client.send_document(chat_id=LOG_CHANNEL_ID, document=file_id, caption=caption)
+            await log_msg.forward(chat_id=cb.message.chat.id)
+            sent_log = (
+                f"✅ **Batch File sent to user**\n\n"
+                f"👤 **User:** {cb.from_user.mention}\n"
+                f"🆔 **ID:** `{cb.from_user.id}`\n"
+                f"📂 **File:** `{file_name}`\n"
+                f"📅 **Time:** `{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`"
+            )
+            await client.send_message(LOG_CHANNEL_ID, sent_log)
+            # Small delay to avoid flood
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            print(f"Batch Send Error: {e}")
+
 @bot.on_callback_query(filters.regex(r"^f#"))
 async def file_callback_handler(client, cb):
     # Force Subscribe Check

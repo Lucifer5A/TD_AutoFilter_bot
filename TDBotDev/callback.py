@@ -13,7 +13,7 @@ async def menu_callback_handler(client: Client, cb: CallbackQuery):
     data = cb.data
 
     # Use back button for help/about
-    back_button = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_start")]])
+    back_button = InlineKeyboardMarkup([[InlineKeyboardButton(style_btn("🔙 Back"), callback_data="back_start")]])
 
     if data == "help_menu":
         await cb.message.edit_caption(caption=style_text(HELP_TEXT), reply_markup=back_button)

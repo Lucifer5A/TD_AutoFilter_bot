@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from pyrogram.errors import UserNotParticipant, PeerIdInvalid, ChatAdminRequired
 from config import FORCE_SUB_CHANNELS, ADMIN_IDS, FORCE_SUB_TEXT, PICS, START_TEXT
-from utils import safe_reply, style_text
+from utils import safe_reply, style_text, style_btn
 
 # Button Labels & Extra Texts
 JOIN_BUTTON_TEXT = "Join Channel 🔗"
@@ -58,14 +58,14 @@ async def force_sub(client: Client, message: Message, user_id: int = None):
                         # But typically we need a URL for the button.
                         continue
 
-            buttons.append([InlineKeyboardButton(JOIN_BUTTON_TEXT, url=invite_link)])
+            buttons.append([InlineKeyboardButton(style_btn(JOIN_BUTTON_TEXT), url=invite_link)])
         except Exception as e:
             print(f"Error fetching chat {chat_id}: {e}")
             continue
 
     # ALWAYS block the user if they are not subscribed, even if buttons fail to generate
     # We add the "Try Again" button at minimum.
-    buttons.append([InlineKeyboardButton(TRY_AGAIN_BUTTON_TEXT, callback_data="check_sub")])
+    buttons.append([InlineKeyboardButton(style_btn(TRY_AGAIN_BUTTON_TEXT), callback_data="check_sub")])
 
     # Determine where to send/edit the message
     chat_id = message.chat.id if hasattr(message, "chat") else message.message.chat.id
