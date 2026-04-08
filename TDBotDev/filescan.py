@@ -62,7 +62,7 @@ async def get_ui(q, qu, l, pg, total, results):
     return InlineKeyboardMarkup(buttons)
 
 # Exclude commands from search handler
-@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset"]))
+@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset", "broadcast", "status", "delete_file"]))
 async def initial_search_handler(client: Client, message: Message):
     # Mandatory ForceSub Check for ALL activities
     if not await force_sub(client, message):
