@@ -13,7 +13,7 @@ services:
         sync: false
       - key: MONGO_URI
         sync: false
-      - key: db_CHANNEL_ID
+      - key: DB_CHANNEL_ID
         sync: false
       - key: OWNER_ID
         sync: false

@@ -2,7 +2,7 @@ import asyncio
 import os
 import threading
 from pyrogram import Client, filters, idle
-from config import API_ID, API_HASH, BOT_TOKEN, db_CHANNEL_ID, OWNER_ID
+from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, OWNER_ID
 from database import add_file, get_file_by_db_id
 from utils import safe_reply
 from app import app
@@ -24,12 +24,17 @@ def run_flask():
     app.run(host='0.0.0.0', port=8080)
 
 # Real-time Channel Indexing handler
-@bot.on_message(filters.chat(db_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
+@bot.on_message(filters.chat(DB_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
 async def channel_index_handler(client, message):
     media = message.document or message.video or message.audio
     file_id = media.file_id
     file_name = getattr(media, "file_name", "document_file")
-    await add_file(file_id, file_name, message.caption, message_id=message.id, channel_id=db_CHANNEL_ID)
+
+    # Only index .mkv files as per user request
+    if not file_name.lower().endswith(".mkv"):
+        return
+
+    await add_file(file_id, file_name, message.caption, message_id=message.id, channel_id=DB_CHANNEL_ID)
 
 # Callback routing - handlers are now in plugins
 # But centralized f# stays here for stability across all modes.
@@ -82,10 +87,10 @@ if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
 
     async def main():
-        print(f"DEBUG: Active db_CHANNEL_ID = {db_CHANNEL_ID}")
+        print(f"DEBUG: Active DB_CHANNEL_ID = {DB_CHANNEL_ID}")
         await bot.start()
         try:
-            await bot.send_message(OWNER_ID, f"**bot started successfully with ForceSub & Web Service ✅**\n\n**Configured Channel ID:** `{db_CHANNEL_ID}`")
+            await bot.send_message(OWNER_ID, f"**bot started successfully with ForceSub & Web Service ✅**\n\n**Configured Channel ID:** `{DB_CHANNEL_ID}`")
         except Exception:
             pass
         await idle()

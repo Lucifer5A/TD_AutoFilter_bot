@@ -25,12 +25,24 @@ QUAL_MAP = {
     "4K": ["4k", "2160p"]
 }
 
-# Regex patterns
-PREFIX_PATTERN = re.compile(r"\[\s?@Team_TD_Links\s?\]", re.IGNORECASE)
+# Regex patterns for UI cleaning
+CLEAN_PATTERNS = [
+    r"\[\s?@Team_TD_Links\s?\]",
+    r"\[\s?Team\s?\]",
+    r"\[\s?HDRip\s?\]",
+    r"\[\s?x264\s?\]",
+    r"@\w+",
+    r"\.mkv$",
+    r"\.mp4$",
+    r"\.avi$",
+    r"_",
+    r"\."
+]
+CLEAN_REGEX = re.compile("|".join(CLEAN_PATTERNS), re.IGNORECASE)
 
 def clean_ui_name(file_name):
-    # Rule 4 & 5: NEVER show prefix in UI, show clean readable names
-    name = PREFIX_PATTERN.sub("", file_name)
+    # Rule: NEVER show tags, clean file_name before displaying
+    name = CLEAN_REGEX.sub(" ", file_name)
     return " ".join(name.split()).strip()
 
 # Navigation Cache for Callback Data
@@ -58,7 +70,10 @@ async def add_file(file_id, file_name, caption, message_id=None, channel_id=None
     )
 
 async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=10):
-    mongo_filter = {"file_name": {"$regex": re.escape(query), "$options": "i"}}
+    # Fuzzy Search: "RRR movie" should match "RRR.2022.1080p"
+    # Logic: ".*".join(query.split())
+    fuzzy_query = ".*".join([re.escape(x) for x in query.split()])
+    mongo_filter = {"file_name": {"$regex": fuzzy_query, "$options": "i"}}
 
     filter_patterns = []
     if quality and quality != "None":
@@ -71,12 +86,15 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
     if filter_patterns:
         combined = "|".join([re.escape(x) for x in filter_patterns])
         mongo_filter["$and"] = [
-            {"file_name": {"$regex": re.escape(query), "$options": "i"}},
+            {"file_name": {"$regex": fuzzy_query, "$options": "i"}},
             {"file_name": {"$regex": combined, "$options": "i"}}
         ]
 
+    # Use projection to fetch only required fields
+    projection = {"file_name": 1, "_id": 1}
+
     total_count = await collection.count_documents(mongo_filter)
-    cursor = collection.find(mongo_filter).skip(skip).limit(limit)
+    cursor = collection.find(mongo_filter, projection).skip(skip).limit(limit)
     results = await cursor.to_list(length=limit)
     return results, total_count
 
