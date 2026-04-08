@@ -91,7 +91,7 @@ async def search_files_fuzzy(query, quality=None, language=None, skip=0, limit=1
         ]
 
     # Use projection to fetch only required fields
-    projection = {"file_name": 1, "_id": 1}
+    projection = {"file_name": 1, "file_id": 1, "_id": 1}
 
     total_count = await collection.count_documents(mongo_filter)
     cursor = collection.find(mongo_filter, projection).skip(skip).limit(limit)

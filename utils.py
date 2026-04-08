@@ -23,7 +23,7 @@ async def safe_reply(message, text, reply_markup=None):
 
 def style_text(text: str):
     """
-    Converts text to Small Caps, Bolds it and wraps in Monospace (backticks).
+    Converts text to Small Caps and Bolds it. Monospace removed as per user request.
     """
     if not text: return text
 
@@ -44,10 +44,7 @@ def style_text(text: str):
         styled_chars.append(small_caps.get(char, char))
 
     styled_text = "".join(styled_chars)
-    # Use triple backticks for multiline strings as suggested by review
-    if "\n" in styled_text:
-        return f"**```\n{styled_text}\n```**"
-    return f"**`{styled_text}`**"
+    return f"**{styled_text}**"
 
 def style_btn(text: str):
     """
