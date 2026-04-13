@@ -13,7 +13,7 @@
 [![Python 3.10](https://img.shields.io/badge/Python-3.10-blue.svg)](https://python.org)
 [![License MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Powerful Telegram Bot to Manage & Save Content Easily**
+**Powerful Telegram Bot to Manage & File search Content Easily**
 
 </div>
 
@@ -21,7 +21,7 @@
 
 ## Auto Filter bot 📌 About
 
-**** allows users to download or forward restricted Telegram content from channels where forwarding is disabled.  
+**** allows users to download or File serching engine and advance language detection.  
 
 Designed for **high performance, stability, and easy deployment**.
 
@@ -81,12 +81,12 @@ systemctl start docker
 systemctl enable docker
 
 # Clone repository
-rm -rf savebot
-git clone {your repository link}.git savebot
-cd savebot
+rm -rf Filter
+git clone {your repository link}.git Filter
+cd Filter
 
 # Build Docker image
-docker build -t savebot .
+docker build -t Filter .
 
 # Run container
 docker run -d --name Filter--restart always Filter
@@ -137,24 +137,6 @@ stats - 👀 Bot statistics (admin)
 restart - ♻️ Restart bot (admin)
 
 ```
-<h3>⚙️ Settings Features</h3>
-
-<div style="display:flex; flex-direction:column; gap:5px; max-width:400px;">
-
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">/settings — Manage bot settings</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Upload Mode — Telegram</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Send As — Document</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Set Upload Destination</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Set Caption</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Thumbnail</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Suffix</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Prefix</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Set Auto Rename</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Metadata ✓</div>
-  <div style="border:1px solid #ccc; padding:8px; border-radius:5px;">Remove / Replace Words</div>
-
-</div>
----
 
 ## 🔧 Requirements
 
