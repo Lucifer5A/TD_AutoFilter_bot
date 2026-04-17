@@ -1,3 +1,8 @@
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
 import os
 import random
 from dotenv import load_dotenv
@@ -59,3 +64,9 @@ def get_random_pic():
 # Initial images
 START_PIC = PICS[0]
 FORCE_PIC = PICS[1]
+
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
