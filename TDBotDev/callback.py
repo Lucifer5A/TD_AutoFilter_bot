@@ -1,3 +1,9 @@
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
+
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from config import START_TEXT, HELP_TEXT, ABOUT_TEXT, UPDATES
@@ -25,3 +31,9 @@ async def menu_callback_handler(client: Client, cb: CallbackQuery):
         await cb.message.edit_caption(caption=style_text(START_TEXT), reply_markup=get_start_buttons())
 
     await cb.answer()
+
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
