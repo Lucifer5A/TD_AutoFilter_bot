@@ -122,7 +122,6 @@ docker logs -f Filter
 | `/reset`   | ❌ Total reset(only owner)|
 | `/broadcast`| ⚡ Broadcast message (admin) |
 | `/stats`    | 👀 Bot statistics (admin) |
-| `/restart`  | ♻️ Restart bot (admin) |
 
 ---
 
@@ -131,10 +130,8 @@ docker logs -f Filter
 ```
 start - 🚀 Start the bot
 delete_file - delete your DB files(admin)
-reset - ❌ Total reset(only owner)
 broadcast -⚡ Broadcast message (admin)
-stats - 👀 Bot statistics (admin)
-restart - ♻️ Restart bot (admin)
+status - 👀 Bot statistics (admin)
 
 ```
 
