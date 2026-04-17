@@ -1,3 +1,9 @@
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
+
 import re
 import time
 import hashlib
@@ -153,3 +159,9 @@ async def delete_files_by_regex(query):
     except Exception as e:
         print(f"DB Delete Error: {e}")
         return 0
+
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
