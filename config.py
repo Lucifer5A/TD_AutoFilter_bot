@@ -29,8 +29,8 @@ DATABASE_NAME = os.environ.get("DATABASE_NAME", "autofilebot")
 COLLECTION_NAME = "files"
 
 # Optional settings
-OWNER_ID = int(os.environ.get("OWNER_ID", 1573111356))
-ADMINS = [int(x) for x in os.environ.get("ADMINS", "1573111356").split(",") if x]
+OWNER_ID = int(os.environ.get("OWNER_ID", 8475661555))
+ADMINS = [int(x) for x in os.environ.get("ADMINS", "8475661555").split(",") if x]
 
 # Force Subscribe Settings
 # Updated to -1002497059972 as per user request
