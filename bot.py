@@ -23,7 +23,9 @@ bot = Client(
 
 def run_flask():
     # Flask for Render keep-alive
-    app.run(host='0.0.0.0', port=8080)
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 # Real-time Channel Indexing handler
 @bot.on_message(filters.chat(DB_CHANNEL_ID) & (filters.document | filters.video | filters.audio))
@@ -124,8 +126,10 @@ async def file_callback_handler(client, cb):
         await cb.answer("Error sending file", show_alert=True)
 
 if __name__ == "__main__":
-    # Start Flask in background thread
-    threading.Thread(target=run_flask, daemon=True).start()
+    # Start Flask in background thread if not running in production Gunicorn
+    import os
+    if not os.environ.get("GUNICORN_RUNNING"):
+        threading.Thread(target=run_flask, daemon=True).start()
 
     async def main():
         bot.start_time = time.time()

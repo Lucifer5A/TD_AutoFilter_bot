@@ -1,9 +1,11 @@
 services:
   - type: web
     name: file-store-bot
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bot.py
+    env: docker
+    plan: free
+    region: oregon
+    buildCommand: docker build -t filter .
+    startCommand: GUNICORN_RUNNING=True gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: API_ID
         sync: false

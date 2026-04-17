@@ -19,5 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Run the bot
-CMD ["python3", "bot.py"]
+# Platform compatibility: Use Gunicorn for production and bind to dynamic $PORT
+# We use GUNICORN_RUNNING=True to let bot.py know it shouldn't start its own Flask thread.
+CMD ["sh", "-c", "python3 bot.py & GUNICORN_RUNNING=True gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120"]
