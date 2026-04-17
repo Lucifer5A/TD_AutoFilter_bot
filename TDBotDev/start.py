@@ -1,3 +1,9 @@
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
+
 import random
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -39,3 +45,9 @@ async def start_handler(client, message):
         )
     except Exception:
         await safe_reply(message, styled_start, reply_markup=get_start_buttons())
+
+#========================================================================
+# Don't Remove Credit Tg - @TDBotDev
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
+# Ask Doubt on telegram https://t.me/TDBotDev
+#========================================================================
