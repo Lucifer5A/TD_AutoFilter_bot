@@ -132,7 +132,6 @@ start - 🚀 Start the bot
 delete_file - delete your DB files(admin)
 broadcast -⚡ Broadcast message (admin)
 status - 👀 Bot statistics (admin)
-
 ```
 
 ## 🔧 Requirements
@@ -150,6 +149,10 @@ pip install -r requirements.txt
 ## 👨‍💻 Developer
 
 **Teligram channel**:- [TD Bot Dev 🇮🇳](https://t.me/TDBotDev)
+
+## 📑 Sample Bot
+
+**TD Filter bot**:- [TD Filter bot ❄️](https://t.me/TD_FlashMan_bot)
 
 Telegram Bot Developer
 
