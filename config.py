@@ -24,12 +24,12 @@ HELP_TEXT = os.environ.get("HELP_TEXT", "📖 **Help Menu**\n\n1. Send any movie
 ABOUT_TEXT = os.environ.get("ABOUT_TEXT", "❄️ **About This Bot**\n\nThis is a high-speed file storage and search bot for CineVerse users. It indexes thousands of files and provides them with minimal delay.\n\nDeveloper: [ @TDBotDev ]")
 
 # Database Settings
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://prakashhydra4314:8eXeW61PWvVfaKrI@helper.gobq9id.mongodb.net/?appName=helper")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://tdanimehub_db_user:cPdMT253KSZpE11Z@helper.wallqjf.mongodb.net/?retryWrites=true&w=majority&appName=Helper")
 DATABASE_NAME = os.environ.get("DATABASE_NAME", "autofilebot")
 COLLECTION_NAME = "files"
 
 # Optional settings
-OWNER_ID = int(os.environ.get("OWNER_ID", 1208374738))
+OWNER_ID = int(os.environ.get("OWNER_ID", 1573111356))
 ADMINS = [int(x) for x in os.environ.get("ADMINS", "1573111356").split(",") if x]  # multiple admins allowed ("8475661555","8475661555")
 
 # Force Subscribe Settings
