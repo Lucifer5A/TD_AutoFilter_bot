@@ -34,7 +34,7 @@ ADMINS = [int(x) for x in os.environ.get("ADMINS", "1573111356").split(",") if x
 
 # Force Subscribe Settings
 # Updated to -1002497059972 as per user request
-FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1003314977013","-1002497059972").split(",") if x] # multiple force sub allowed ("-1003511440278","-1003511440278")
+FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1003314977013,-1002497059972").split(",") if x] # multiple force sub allowed ("-1003511440278","-1003511440278")
 ADMIN_IDS = ADMINS + [OWNER_ID]
 FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channels to use this bot!**\n\nDue to high server load, only subscribers can search files.")
 
