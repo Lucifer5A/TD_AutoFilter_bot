@@ -177,24 +177,21 @@ function reveal() {
 window.addEventListener("scroll", reveal);
 reveal(); // Initial check
 
-// Snowfall Generator
+// Snowfall Generator (Rain-like Smooth Falling)
 function createSnow() {
     const snowContainer = document.getElementById('snow-container');
-    const snowCount = 50;
+    const snowCount = 100;
 
     for (let i = 0; i < snowCount; i++) {
         const snowflake = document.createElement('div');
         snowflake.className = 'snowflake';
 
-        // Random properties
-        const size = Math.random() * 4 + 2 + 'px';
+        // Random properties for rain-like effect
         const left = Math.random() * 100 + '%';
-        const duration = Math.random() * 10 + 10 + 's';
-        const delay = Math.random() * 10 + 's';
-        const opacity = Math.random() * 0.5 + 0.3;
+        const duration = Math.random() * 2 + 1.5 + 's'; // Much faster for dropping effect
+        const delay = Math.random() * 5 + 's';
+        const opacity = Math.random() * 0.4 + 0.2;
 
-        snowflake.style.width = size;
-        snowflake.style.height = size;
         snowflake.style.left = left;
         snowflake.style.animationDuration = duration;
         snowflake.style.animationDelay = delay;
