@@ -221,7 +221,7 @@ function createMist() {
 const YOUTUBE_LINKS = [
     "https://youtu.be/gfB1HbxyP3w",
     "https://youtu.be/vtqXdD2tGCg",
-    "https://youtube.com/playlist?list=PLMk9Mkybv82O75Wo9Y2vl2nL4mqQJu2F7"
+    "https://youtu.be/tqV2jH5YWFY"
 ];
 
 async function fetchYouTubeMetadata(url) {
