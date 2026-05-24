@@ -7,7 +7,7 @@
 import random
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from config import START_TEXT, PICS, UPDATES
+from config import START_TEXT, HELP_TEXT, PICS, UPDATES
 from TDBotDev.forcesub import force_sub
 from Database.database import add_user
 from utils import safe_reply, style_text, style_btn
@@ -45,6 +45,12 @@ async def start_handler(client, message):
         )
     except Exception:
         await safe_reply(message, styled_start, reply_markup=get_start_buttons())
+
+@Client.on_message(filters.command("help") & filters.private)
+async def help_handler(client, message):
+    if not await force_sub(client, message):
+        return
+    await safe_reply(message, style_text(HELP_TEXT))
 
 #========================================================================
 # Don't Remove Credit Tg - @TDBotDev

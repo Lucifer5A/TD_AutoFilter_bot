@@ -1,7 +1,7 @@
 import re
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
-from config import MAX_RESULTS
+from config import MAX_RESULTS, BOT_COMMANDS
 from Database.database import search_files_fuzzy, save_nav_state, get_nav_state, clean_ui_name
 from utils import safe_edit, safe_reply, style_text, style_btn
 from TDBotDev.forcesub import force_sub
@@ -62,7 +62,7 @@ async def get_ui(q, qu, l, pg, total, results):
     return InlineKeyboardMarkup(buttons)
 
 # Exclude commands from search handler
-@Client.on_message(filters.text & filters.private & ~filters.command(["start", "reset", "broadcast", "status", "delete_file", "delete_files"]))
+@Client.on_message(filters.text & filters.private & ~filters.command([c for c, d in BOT_COMMANDS]))
 async def initial_search_handler(client: Client, message: Message):
     # Mandatory ForceSub Check for ALL activities
     if not await force_sub(client, message):

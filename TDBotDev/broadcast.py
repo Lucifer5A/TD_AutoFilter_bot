@@ -3,7 +3,7 @@ import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from pyrogram.errors import FloodWait
-from config import ADMIN_IDS
+from config import ADMIN_IDS, BOT_COMMANDS
 from Database.database import get_all_users, get_total_users
 from utils import style_text, style_btn, safe_reply, safe_edit
 
@@ -28,7 +28,7 @@ async def broadcast_command_handler(client, message: Message):
     buttons = [[InlineKeyboardButton(style_btn("❌ Cancel"), callback_data="bc_cancel")]]
     await safe_reply(message, style_text(text), reply_markup=InlineKeyboardMarkup(buttons))
 
-@Client.on_message(filters.private & filters.user(ADMIN_IDS) & ~filters.command(["start", "broadcast", "status", "reset", "delete_file", "delete_files"]), group=-1)
+@Client.on_message(filters.private & filters.user(ADMIN_IDS) & ~filters.command([c for c, d in BOT_COMMANDS]), group=-1)
 async def capture_broadcast_message(client, message: Message):
     user_id = message.from_user.id
     if user_id not in broadcast_state or broadcast_state[user_id]["step"] != "waiting":

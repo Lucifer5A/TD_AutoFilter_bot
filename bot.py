@@ -2,7 +2,8 @@ import asyncio
 import os
 import threading
 from pyrogram import Client, filters, idle
-from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, OWNER_ID
+from pyrogram.types import BotCommand
+from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, OWNER_ID, BOT_COMMANDS
 from Database.database import add_file, get_file_by_db_id, search_files_fuzzy, get_nav_state
 from utils import safe_reply, parse_duration, auto_delete_messages, style_text, style_btn
 from app import app
@@ -33,10 +34,6 @@ async def channel_index_handler(client, message):
     media = message.document or message.video or message.audio
     file_id = media.file_id
     file_name = getattr(media, "file_name", "document_file")
-
-    # Only index .mkv files as per user request
-    if not file_name.lower().endswith(".mkv"):
-        return
 
     await add_file(file_id, file_name, message.caption, message_id=message.id, channel_id=DB_CHANNEL_ID)
 
@@ -72,13 +69,23 @@ async def send_all_callback_handler(client, cb):
         file_name = f['file_name']
         full_info = await get_file_by_db_id(str(f['_id']))
         caption = full_info.get('caption') or file_name
+        m_id = full_info.get('message_id')
+        c_id = full_info.get('channel_id')
 
         try:
-            m = await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
+            if m_id and c_id:
+                m = await client.copy_message(chat_id=cb.message.chat.id, from_chat_id=c_id, message_id=m_id, caption=caption)
+            else:
+                m = await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
             sent_msg_ids.append(m.id)
             await asyncio.sleep(0.5)
         except Exception as e:
             print(f"Batch Send Error: {e}")
+            try:
+                m = await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
+                sent_msg_ids.append(m.id)
+            except:
+                pass
 
     # Handle Auto-Delete
     delay = parse_duration(AUTO_DELETE_TIME)
@@ -106,8 +113,18 @@ async def file_callback_handler(client, cb):
     caption = file_info.get('caption') or file_name
 
     try:
-        # Send file directly to user
-        m = await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
+        m_id = file_info.get('message_id')
+        c_id = file_info.get('channel_id')
+
+        # Try copy_message for reliability
+        if m_id and c_id:
+            try:
+                m = await client.copy_message(chat_id=cb.message.chat.id, from_chat_id=c_id, message_id=m_id, caption=caption)
+            except Exception:
+                m = await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
+        else:
+            m = await client.send_document(chat_id=cb.message.chat.id, document=file_id, caption=caption)
+
         await cb.answer()
 
         # Handle Auto-Delete
@@ -135,6 +152,14 @@ if __name__ == "__main__":
         bot.start_time = time.time()
         print(f"DEBUG: Active DB_CHANNEL_ID = {DB_CHANNEL_ID}")
         await bot.start()
+
+        # Auto-set Bot Commands
+        try:
+            await bot.set_bot_commands([BotCommand(c, d) for c, d in BOT_COMMANDS])
+            print("INFO: Bot Commands set successfully")
+        except Exception as e:
+            print(f"ERROR: Failed to set bot commands: {e}")
+
         try:
             await bot.send_message(OWNER_ID, f"**bot started successfully with ForceSub & Web Service ✅**\n\n**Configured Channel ID:** `{DB_CHANNEL_ID}`")
         except Exception:

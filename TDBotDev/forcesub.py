@@ -16,7 +16,8 @@ from config import (
     ADMIN_IDS,
     FORCE_SUB_TEXT,
     PICS,
-    START_TEXT
+    START_TEXT,
+    UPDATES
 )
 
 from utils import safe_reply, style_text, style_btn
@@ -31,7 +32,7 @@ TRY_AGAIN_BUTTON_TEXT = "Try Again 🔄"
 SUCCESS_TEXT = "✅ Thank you for joining! You can now use the bot."
 ALERT_TEXT = "❌ You haven't joined all channels yet!"
 
-CACHE_TIME = 60
+CACHE_TIME = 10
 
 
 async def is_subscribed(client: Client, user_id: int):
@@ -53,8 +54,9 @@ async def is_subscribed(client: Client, user_id: int):
         try:
             member = await client.get_chat_member(channel_id, user_id)
 
-            # Extra safety check
-            if member.status in ["left", "kicked"]:
+            # Robust status check for various Pyrogram versions
+            status = str(member.status).lower()
+            if "left" in status or "kicked" in status or "banned" in status:
                 unjoined.append(channel_id)
 
         except UserNotParticipant:
@@ -62,8 +64,9 @@ async def is_subscribed(client: Client, user_id: int):
 
         except Exception as e:
             print(f"[FORCESUB ERROR] {channel_id}: {e}")
-
-            # Don't bypass all checks because of one error
+            # If there's an error (like PeerIdInvalid), we might want to skip this channel
+            # instead of blocking the user, but the user wants it to work.
+            # Let's be cautious. If the bot is not admin, it might fail.
             continue
 
     subscribed = len(unjoined) == 0
@@ -104,16 +107,25 @@ async def build_buttons(client: Client, channels):
                 except Exception as e:
                     print(f"[INVITE EXPORT ERROR] {chat_id}: {e}")
 
-            if invite_link:
-                buttons.append([
-                    InlineKeyboardButton(
-                        style_btn(JOIN_BUTTON_TEXT),
-                        url=invite_link
-                    )
-                ])
+            if not invite_link:
+                invite_link = UPDATES
+
+            buttons.append([
+                InlineKeyboardButton(
+                    style_btn(JOIN_BUTTON_TEXT),
+                    url=invite_link
+                )
+            ])
 
         except Exception as e:
             print(f"[BUTTON BUILD ERROR] {chat_id}: {e}")
+            # Fallback for error case
+            buttons.append([
+                InlineKeyboardButton(
+                    style_btn(JOIN_BUTTON_TEXT),
+                    url=UPDATES
+                )
+            ])
 
     # Always add retry button
     buttons.append([
@@ -165,11 +177,8 @@ async def check_sub_callback(client: Client, cb: CallbackQuery):
 
     user_id = cb.from_user.id
 
-    # Remove cache before re-check
+    # Force immediate re-check by clearing cache
     SUB_CACHE.pop(user_id, None)
-
-    # Small delay for Telegram sync
-    await asyncio.sleep(0.5)
 
     subscribed, _ = await is_subscribed(client, user_id)
 
