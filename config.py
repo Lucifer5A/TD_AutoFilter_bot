@@ -10,12 +10,12 @@ from dotenv import load_dotenv
 # config.py
 load_dotenv()
 
-API_ID = int(os.environ.get("API_ID", "289611"))
-API_HASH = os.environ.get("API_HASH", "fa3796dbdec1ef151aca5f14815d06")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "7718666640:AAFYQFT2PP2WSiN-lGLssp9qg5bhvUbk")
+API_ID = int(os.environ.get("API_ID", "15554219"))
+API_HASH = os.environ.get("API_HASH", "f7e1e318df2bfa9ba39b14e34c43fb4c")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8996788705:AAGFSkVOkEFiNcW3_hazT0sk7YNyTdRQLUI")
 
 # Search Settings
-DB_CHANNEL_ID = int(os.environ.get("DB_CHANNEL_ID", "-1003067419"))
+DB_CHANNEL_ID = int(os.environ.get("DB_CHANNEL_ID", " -1004298873390"))
 START_TEXT = os.environ.get("START_TEXT", "🚀 Welcome to CineVerse Ultra\n\n🎬 Movies • Series • Anime • Episodes — All in One Place\n⚡ Lightning Fast Search with Smart Auto Filters\n🧠 Auto Detect Language • Quality • Seasons\n\n📂 Continue Watching • 🔥 Trending • ▶️ One Click Play\n\n🔍 Just send any name (movie / series / file) to start exploring")
 MAX_RESULTS = int(os.environ.get("MAX_RESULTS", 10))
 
@@ -24,17 +24,17 @@ HELP_TEXT = os.environ.get("HELP_TEXT", "📖 **Help Menu**\n\n1. Send any movie
 ABOUT_TEXT = os.environ.get("ABOUT_TEXT", "❄️ **About This Bot**\n\nThis is a high-speed file storage and search bot for CineVerse users. It indexes thousands of files and provides them with minimal delay.\n\nDeveloper: [ @TDBotDev ]")
 
 # Database Settings
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://tdaniuser:cPdMT253KSZpE11Z@helper.wallqjf.mongodb.net/?retryWrites=true&w=majority&appName=Helper")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://tapanagastya5:uXPxIUdW9j4paheW@helper.gj3wgbn.mongodb.net/?appName=helper")
 DATABASE_NAME = os.environ.get("DATABASE_NAME", "autofilebot")
 COLLECTION_NAME = "files"
 
 # Optional settings
-OWNER_ID = int(os.environ.get("OWNER_ID", "1573111356"))
-ADMINS = [int(x) for x in os.environ.get("ADMINS", "1573111356").split(",") if x]  # multiple admins allowed ("8475661555","8475661555")
+OWNER_ID = int(os.environ.get("OWNER_ID", "1463212098"))
+ADMINS = [int(x) for x in os.environ.get("ADMINS", "1463212098").split(",") if x]  # multiple admins allowed ("8475661555","8475661555")
 
 # Force Subscribe Settings
 # Updated to multiple channels as per user request
-FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1002497059972").split(",") if x] # multiple force sub allowed ("-1003511440278","-1003511440278")
+FORCE_SUB_CHANNELS = [int(x) for x in os.environ.get("FORCE_SUB_CHANNELS", "-1004298873390").split(",") if x] # multiple force sub allowed ("-1003511440278","-1003511440278")
 ADMIN_IDS = ADMINS + [OWNER_ID]
 FORCE_SUB_TEXT = os.environ.get("FORCE_SUB_TEXT", "📥 **Please join our channels to use this bot!**\n\nDue to high server load, only subscribers can search files.")
 
